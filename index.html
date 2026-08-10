@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eModul MInD Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hidden-section {
+            display: none !important;
+        }
+        .active-nav {
+            background-color: #e0e7ff;
+            color: #4338ca;
+            border-right: 4px solid #4338ca;
+            font-weight: 600;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+        
+        .domain-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6b7280;
+            font-weight: 700;
+            padding: 1rem 1.5rem 0.5rem 1.5rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <div id="login-screen" class="fixed inset-0 bg-indigo-900 z-50 flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 fade-in">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-sm">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Pendaftaran Modul</h2>
+                <p class="text-sm text-gray-500 mt-1">Sila masukkan butiran diri anda</p>
+            </div>
+            
+            <form id="login-form" onsubmit="event.preventDefault(); handleLogin();" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Penuh</label>
+                    <input type="text" id="reg-nama" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: Ali bin Abu">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">No. Pendaftaran (Matrik)</label>
+                    <input type="text" id="reg-matrik" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 03DKA21F1001">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">No. Kad Pengenalan</label>
+                    <input type="text" id="reg-ic" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 010203-04-0506">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">No. Telefon</label>
+                    <input type="tel" id="reg-tel" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 012-3456789">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-md mt-4">
+                    Mula Aktiviti
+                </button>
+            </form>
+        </div>
+        <p class="text-indigo-200 text-sm mt-8">Hak Cipta Amirul Ali JKM POLIMAS</p>
+        <button onclick="openAdmin()" class="text-indigo-300 hover:text-white text-xs mt-2 underline">Panel Admin</button>
+    </div>
+
+    <!-- Panel Admin -->
+    <div id="admin-screen" class="hidden-section fixed inset-0 bg-gray-900/70 z-[70] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col">
+            <div class="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl shrink-0">
+                <h3 class="text-lg font-bold text-gray-900"><i class="fas fa-user-shield mr-2 text-indigo-600"></i>Panel Admin</h3>
+                <button onclick="closeAdmin()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div id="admin-login-box">
+                    <p class="text-sm text-gray-600 mb-4">Masukkan kata laluan admin untuk urus status aktif/tidak aktif setiap aktiviti.</p>
+                    <input type="password" id="admin-password" placeholder="Kata Laluan Admin" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 mb-2" onkeydown="if(event.key==='Enter') adminLogin();">
+                    <p id="admin-login-error" class="text-xs text-red-600 mb-3 hidden">Kata laluan salah. Sila cuba lagi.</p>
+                    <button onclick="adminLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition">Log Masuk</button>
+                </div>
+                <div id="admin-panel-box" class="hidden">
+                    <p class="text-sm text-gray-600 mb-4">Togol untuk papar/sembunyi aktiviti daripada menu pelajar. Perubahan berkuat kuasa serta-merta.</p>
+                    <div id="admin-activity-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden-section flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- Header -->
+        <header class="bg-indigo-700 text-white shadow-md z-10 relative shrink-0">
+            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <button id="mobile-menu-btn" class="md:hidden text-white hover:text-indigo-200">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <i class="fas fa-book-open text-xl hidden sm:block"></i>
+                    <h1 class="text-lg font-bold tracking-wide">eModul MInD</h1>
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                    <div class="hidden sm:block text-indigo-100" id="header-user-name">Pengguna</div>
+                    <button onclick="logout()" class="bg-indigo-800 hover:bg-indigo-900 py-1.5 px-4 rounded-full transition font-medium text-xs">
+                        Log Keluar
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Layout Utama -->
+        <div class="flex-1 flex overflow-hidden relative">
+            <!-- Sidebar Navigation -->
+            <aside id="sidebar" class="w-64 bg-white shadow-xl flex-col overflow-y-auto hidden md:flex z-20 absolute md:relative h-full shrink-0 border-r border-gray-200 pb-20">
+                <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center md:hidden">
+                    <span class="font-bold text-gray-700">Menu</span>
+                    <button id="close-sidebar" class="text-gray-500 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                
+                <nav class="flex-1 flex flex-col py-2" id="nav-menu">
+                    <button onclick="showSection('home', this)" class="active-nav text-left px-6 py-3 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                        <i class="fas fa-home w-4 text-center"></i> Profil & Laman Utama
+                    </button>
+
+                    <div class="nav-group" data-group="d1">
+                        <div class="domain-header">Domain 1: Kesedaran Diri</div>
+                        <button data-activity="psikometrik" onclick="showSection('psikometrik', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-fingerprint w-4 text-center"></i> Ujian Psikometrik
+                        </button>
+                    </div>
+
+                    <div class="nav-group" data-group="d2">
+                        <div class="domain-header">Domain 2: Matlamat & SMART</div>
+                        <button data-activity="smart" onclick="showSection('smart', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-bullseye w-4 text-center"></i> Matlamat i-SMART
+                        </button>
+                        <button data-activity="swot" onclick="showSection('swot', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-border-all w-4 text-center"></i> Analisis SWOT
+                        </button>
+                        <button data-activity="pnm" onclick="showSection('pnm', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-calculator w-4 text-center"></i> Kalkulator PNM
+                        </button>
+                    </div>
+
+                    <div class="nav-group" data-group="audit">
+                        <div class="domain-header">Audit Diri (Kemahiran)</div>
+                        <button data-activity="my3s" onclick="showSection('my3s', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-clipboard-check w-4 text-center"></i> My3S (Insaniah)
+                        </button>
+                        <button data-activity="pengucapan" onclick="showSection('pengucapan', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-microphone w-4 text-center"></i> Pengucapan Efektif
+                        </button>
+                        <button data-activity="tegasdiri" onclick="showSection('tegasdiri', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-shield-alt w-4 text-center"></i> Tegas Diri (Asertif)
+                        </button>
+                        <button data-activity="dass" onclick="showSection('dass', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-heartbeat w-4 text-center"></i> Pengurusan Stres
+                        </button>
+                    </div>
+
+                    <div class="nav-group" data-group="d3">
+                        <div class="domain-header">Domain 3: Jati Diri</div>
+                        <button data-activity="jatidiri" onclick="showSection('jatidiri', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-user-shield w-4 text-center"></i> Pemerkasaan Jati Diri
+                        </button>
+                    </div>
+
+                    <div class="nav-group" data-group="d4">
+                        <div class="domain-header">Domain 4: Pembelajaran</div>
+                        <button data-activity="masa" onclick="showSection('masa', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-clock w-4 text-center"></i> Pengurusan Masa
+                        </button>
+                        <button data-activity="vak" onclick="showSection('vak', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-brain w-4 text-center"></i> Gaya Belajar VAK
+                        </button>
+                    </div>
+
+                    <div class="nav-group" data-group="d5">
+                        <div class="domain-header">Domain 5: Kecemerlangan Kerjaya</div>
+                        <button data-activity="kerjaya" onclick="showSection('kerjaya', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-briefcase w-4 text-center"></i> Pilihan Kerjaya
+                        </button>
+                        <button data-activity="resume" onclick="showSection('resume', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-file-lines w-4 text-center"></i> Semakan Resume
+                        </button>
+                        <button data-activity="temuduga" onclick="showSection('temuduga', this)" class="text-left px-6 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-comments w-4 text-center"></i> Persediaan Temu Duga
+                        </button>
+                    </div>
+
+                    <div class="mt-auto pt-4 border-t border-gray-100">
+                        <button onclick="openAdmin()" class="text-left px-6 py-2.5 text-xs text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition w-full flex items-center gap-3">
+                            <i class="fas fa-user-shield w-4 text-center"></i> Panel Admin
+                        </button>
+                    </div>
+                </nav>
+            </aside>
+
+            <main class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 w-full" id="main-content">
+                
+                <!-- Home / Profil Section -->
+                <section id="home" class="fade-in max-w-4xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                        <div class="flex flex-col md:flex-row items-center gap-6 mb-8 border-b pb-6">
+                            <div class="w-24 h-24 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-4xl shadow-inner">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="text-center md:text-left">
+                                <h2 class="text-2xl font-bold text-gray-800" id="display-nama">Nama Pelajar</h2>
+                                <p class="text-indigo-600 font-medium mt-1" id="display-matrik">No Matrik</p>
+                                <div class="flex flex-wrap gap-3 mt-3 text-sm text-gray-500 justify-center md:justify-start">
+                                    <span><i class="fas fa-id-card mr-1"></i> <span id="display-ic">IC</span></span>
+                                    <span><i class="fas fa-phone mr-1"></i> <span id="display-tel">Tel</span></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Selamat Datang ke eModul MInD</h3>
+                            <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed text-sm">
+                                Modul ini mengandungi 5 Domain utama merangkumi aktiviti rasmi untuk merancang kecemerlangan akademik, kerjaya, dan sahsiah anda. Sila pilih menu di sebelah kiri untuk melengkapkan setiap aktiviti.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Domain 1: Psikometrik -->
+                <section id="psikometrik" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Domain 1: Kesedaran Diri</h2>
+                        <p class="text-gray-600 mt-1">Ujian Inventori Personaliti Warna (IPW) Ringkas</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <p class="mb-4 text-sm text-gray-600">Pilih kenyataan yang paling tepat menerangkan diri anda untuk mengetahui warna personaliti dominan anda.</p>
+                        <form id="ipw-form" onsubmit="event.preventDefault(); submitIPW();">
+                            <div class="space-y-4" id="ipw-questions">
+                                <!-- Generated by JS -->
+                            </div>
+                            <button type="submit" class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-lg transition shadow-md w-full sm:w-auto">
+                                Semak Warna Personaliti
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="smart" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Matlamat i-SMART</h2>
+                        <p class="text-gray-600 mt-1">Bina matlamat yang jelas berpandukan prinsip S.M.A.R.T.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <form id="smart-form" onsubmit="event.preventDefault(); submitSMART();" class="space-y-5">
+                            <div>
+                                <label class="font-bold text-green-600 block mb-1">Specific (Khusus)</label>
+                                <input type="text" id="smart-s" required class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-400 outline-none" placeholder="Cth: Saya mahu mendapat Anugerah Dekan">
+                            </div>
+                            <div>
+                                <label class="font-bold text-red-500 block mb-1">Measurable (Boleh Diukur)</label>
+                                <input type="text" id="smart-m" required class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-400 outline-none" placeholder="Cth: Dengan sasaran PNM 3.80">
+                            </div>
+                            <div>
+                                <label class="font-bold text-yellow-500 block mb-1">Attainable (Boleh Dicapai)</label>
+                                <input type="text" id="smart-a" required class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-yellow-400 outline-none" placeholder="Cth: Saya akan belajar 3 jam sehari">
+                            </div>
+                            <div>
+                                <label class="font-bold text-purple-500 block mb-1">Relevant (Relevan)</label>
+                                <input type="text" id="smart-r" required class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none" placeholder="Cth: Untuk mudah mendapat kerja jurutera">
+                            </div>
+                            <div>
+                                <label class="font-bold text-pink-500 block mb-1">Time-Bound (Tempoh Masa)</label>
+                                <input type="text" id="smart-t" required class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-pink-400 outline-none" placeholder="Cth: Menjelang akhir semester 6">
+                            </div>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-lg transition shadow-md w-full sm:w-auto mt-4">
+                                Jana Matlamat SMART
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- SWOT Section -->
+                <section id="swot" class="hidden-section fade-in max-w-5xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Analisis SWOT</h2>
+                        <p class="text-gray-600 mt-1">Kenal pasti Kekuatan, Kelemahan, Peluang, dan Ancaman.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-xl shadow-sm p-5 border-t-4 border-t-blue-500">
+                            <h3 class="font-bold text-blue-700 mb-2">KEKUATAN (Strengths)</h3>
+                            <textarea id="swot-s" class="w-full h-24 p-3 border border-gray-200 rounded text-sm outline-none focus:border-blue-500" placeholder="Kelebihan anda..."></textarea>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-5 border-t-4 border-t-red-500">
+                            <h3 class="font-bold text-red-700 mb-2">KELEMAHAN (Weaknesses)</h3>
+                            <textarea id="swot-w" class="w-full h-24 p-3 border border-gray-200 rounded text-sm outline-none focus:border-red-500" placeholder="Kelemahan anda..."></textarea>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-5 border-t-4 border-t-emerald-500">
+                            <h3 class="font-bold text-emerald-700 mb-2">PELUANG (Opportunities)</h3>
+                            <textarea id="swot-o" class="w-full h-24 p-3 border border-gray-200 rounded text-sm outline-none focus:border-emerald-500" placeholder="Peluang di sekeliling..."></textarea>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-5 border-t-4 border-t-orange-500">
+                            <h3 class="font-bold text-orange-700 mb-2">ANCAMAN (Threats)</h3>
+                            <textarea id="swot-t" class="w-full h-24 p-3 border border-gray-200 rounded text-sm outline-none focus:border-orange-500" placeholder="Halangan dari luar..."></textarea>
+                        </div>
+                    </div>
+                    <button onclick="submitSWOT()" class="mt-4 bg-indigo-600 text-white py-2.5 px-6 rounded-lg shadow-md hover:bg-indigo-700">Jana Rumusan</button>
+                </section>
+
+                <section id="pnm" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Kalkulator Wawasan Diri (PNM)</h2>
+                        <p class="text-gray-600 mt-1">Kira sasaran Purata Nilai Mata (PNM) anda.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border p-6 overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[500px]">
+                            <thead>
+                                <tr class="bg-gray-100 text-sm">
+                                    <th class="p-3 w-1/2">Nama Kursus</th>
+                                    <th class="p-3 text-center">Jam Kredit</th>
+                                    <th class="p-3 text-center">Gred</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="pnm-tbody">
+                                <!-- JS inserts rows -->
+                            </tbody>
+                        </table>
+                        <div class="mt-4 flex flex-wrap gap-4 justify-between items-center">
+                            <button onclick="addPnmRow()" class="text-indigo-600 font-medium text-sm hover:underline"><i class="fas fa-plus"></i> Tambah Subjek</button>
+                            <button onclick="calculatePNM()" class="bg-indigo-600 text-white py-2 px-6 rounded shadow-md hover:bg-indigo-700">Kira PNM</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="my3s" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Kemahiran Insaniah (My3S)</h2>
+                        <p class="text-gray-600 mt-1">Tandakan kemahiran yang telah anda kuasai.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border p-6">
+                        <form id="my3s-form" onsubmit="event.preventDefault(); submitMy3S();">
+                            <div class="space-y-3 text-sm" id="my3s-list">
+                                <!-- JS inserts checkboxes -->
+                            </div>
+                            <button type="submit" class="mt-6 bg-indigo-600 text-white py-2 px-6 rounded shadow-md">Semak Kemahiran</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Audit Diri - Pengucapan -->
+                <section id="pengucapan" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Ujian Pengucapan Efektif</h2>
+                        <p class="text-gray-600 mt-1">Nilaikan kemahiran komunikasi anda.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border p-6">
+                        <form id="pengucapan-form" onsubmit="event.preventDefault(); submitPengucapan();">
+                            <div class="space-y-5" id="pengucapan-questions"></div>
+                            <button type="submit" class="mt-6 bg-indigo-600 text-white py-2 px-6 rounded shadow-md">Semak Keputusan</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Audit Diri - Tegas Diri -->
+                <section id="tegasdiri" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Kemahiran Tegas Diri (Asertif)</h2>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border p-6">
+                        <form id="tegas-form" onsubmit="event.preventDefault(); submitTegas();">
+                            <div class="space-y-5" id="tegas-questions"></div>
+                            <button type="submit" class="mt-6 bg-indigo-600 text-white py-2 px-6 rounded shadow-md">Semak Sikap Asertif</button>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="dass" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Ujian Pengurusan Stres (DASS-21)</h2>
+                        <p class="text-gray-600 mt-1">Baca setiap kenyataan dan pilih sejauh mana ia menggambarkan keadaan anda SEMINGGU yang lepas. Tiada jawapan betul atau salah.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border p-6">
+                        <form id="dass-form" onsubmit="event.preventDefault(); submitDASS();">
+                            <div class="space-y-4" id="dass-questions"></div>
+                            <button type="submit" class="mt-6 bg-indigo-600 text-white py-2 px-6 rounded shadow-md">Jana Skor Kesihatan Mental</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Domain 3: Pemerkasaan Jati Diri -->
+                <section id="jatidiri" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Domain 3: Pemerkasaan Jati Diri</h2>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-xl shadow-sm border p-6">
+                            <h3 class="font-bold text-gray-800 mb-3 border-b pb-2"><i class="fas fa-star text-yellow-500"></i> Inspirasiku (Role Model)</h3>
+                            <div class="space-y-3">
+                                <input type="text" id="jd-nama" class="w-full p-2 border rounded text-sm outline-none" placeholder="Nama Tokoh / Role Model">
+                                <textarea id="jd-nilai" class="w-full p-2 border rounded text-sm outline-none h-20" placeholder="Nilai positif yang ingin dicontohi..."></textarea>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border p-6">
+                            <h3 class="font-bold text-gray-800 mb-3 border-b pb-2"><i class="fas fa-users text-blue-500"></i> Penglibatan Program</h3>
+                            <div class="space-y-3">
+                                <textarea id="jd-akademik" class="w-full p-2 border rounded text-sm outline-none h-20" placeholder="Senaraikan program akademik yang disertai..."></textarea>
+                                <textarea id="jd-bukan" class="w-full p-2 border rounded text-sm outline-none h-20" placeholder="Senaraikan program BUKAN akademik (sukan/kelab)..."></textarea>
+                            </div>
+                        </div>
+                        <button onclick="submitJatiDiri()" class="bg-indigo-600 text-white py-2 px-6 rounded shadow-md">Simpan Jati Diri</button>
+                    </div>
+                </section>
+
+                <section id="masa" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Pengurusan Masa (Kuadran Covey)</h2>
+                        <p class="text-gray-600 mt-1">Kategorikan tugas anda mengikut keutamaan.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-red-50 rounded-xl border border-red-200 p-4">
+                            <h3 class="font-bold text-red-700 text-sm mb-2">Q1: PENTING & SEGERA</h3>
+                            <textarea id="q1" class="w-full h-20 p-2 border rounded text-sm" placeholder="Contoh: Kuiz esok, tugasan due hari ini..."></textarea>
+                        </div>
+                        <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
+                            <h3 class="font-bold text-blue-700 text-sm mb-2">Q2: PENTING, TIDAK SEGERA</h3>
+                            <textarea id="q2" class="w-full h-20 p-2 border rounded text-sm" placeholder="Contoh: Ulangkaji, bersenam..."></textarea>
+                        </div>
+                        <div class="bg-yellow-50 rounded-xl border border-yellow-200 p-4">
+                            <h3 class="font-bold text-yellow-700 text-sm mb-2">Q3: TIDAK PENTING, SEGERA</h3>
+                            <textarea id="q3" class="w-full h-20 p-2 border rounded text-sm" placeholder="Contoh: Mesej kawan, gangguan kecil..."></textarea>
+                        </div>
+                        <div class="bg-gray-100 rounded-xl border border-gray-300 p-4">
+                            <h3 class="font-bold text-gray-700 text-sm mb-2">Q4: TIDAK PENTING, TIDAK SEGERA</h3>
+                            <textarea id="q4" class="w-full h-20 p-2 border rounded text-sm" placeholder="Contoh: Main game, scroll TikTok terlalu lama..."></textarea>
+                        </div>
+                    </div>
+                    <button onclick="submitMasa()" class="mt-4 bg-indigo-600 text-white py-2 px-6 rounded shadow-md">Semak Pengurusan</button>
+                </section>
+
+                <!-- VAK Section -->
+                <section id="vak" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Gaya Pembelajaran VAK</h2>
+                        <p class="text-gray-600 mt-1">Kenal pasti gaya pembelajaran dominan anda.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border p-6">
+                        <form id="vak-form" onsubmit="event.preventDefault(); submitVAK();">
+                            <div class="space-y-6" id="vak-questions"></div>
+                            <button type="submit" class="mt-6 bg-indigo-600 text-white py-2 px-6 rounded shadow-md">Ketahui Gaya Belajar</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Domain 5: Pilihan Kerjaya -->
+                <section id="kerjaya" class="hidden-section fade-in max-w-5xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Domain 5: Kecemerlangan Kerjaya</h2>
+                        <p class="text-gray-600 mt-1">Tandakan (✓) kenyataan yang menepati diri anda bagi setiap pilihan di bawah.</p>
+                    </div>
+                    <form id="kerjaya-form" onsubmit="event.preventDefault(); submitKerjaya();" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white rounded-xl shadow-sm border-t-4 border-t-blue-500 border p-4">
+                                <h3 class="font-bold text-blue-700 mb-3 text-sm">PILIHAN 1: MENCARI PEKERJAAN</h3>
+                                <div class="space-y-2 text-xs" id="kerjaya-p1"></div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-sm border-t-4 border-t-emerald-500 border p-4">
+                                <h3 class="font-bold text-emerald-700 mb-3 text-sm">PILIHAN 2: USAHAWAN / BEKERJA SENDIRI</h3>
+                                <div class="space-y-2 text-xs" id="kerjaya-p2"></div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-sm border-t-4 border-t-purple-500 border p-4">
+                                <h3 class="font-bold text-purple-700 mb-3 text-sm">PILIHAN 3: MELANJUTKAN PENGAJIAN</h3>
+                                <div class="space-y-2 text-xs" id="kerjaya-p3"></div>
+                            </div>
+                        </div>
+                        <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-xs text-indigo-800">
+                            <i class="fas fa-circle-info mr-1"></i> Jika anda memilih untuk melanjutkan pengajian di peringkat lebih tinggi (TVET), anda juga digalakkan mendaftar <strong>Sistem Kajian Pengesanan Graduan TVET (SKPG-TVET)</strong> melalui Portal GREaT KPT di <span class="font-mono">graduate.mohe.gov.my/SKPG1</span>.
+                        </div>
+                        <button type="submit" class="bg-indigo-600 text-white py-2.5 px-6 rounded-lg shadow-md hover:bg-indigo-700">Semak Kecenderungan Kerjaya</button>
+                    </form>
+                </section>
+
+                <!-- Domain 5: Semakan Resume -->
+                <section id="resume" class="hidden-section fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Semakan Kesediaan Resume</h2>
+                        <p class="text-gray-600 mt-1">Tandakan komponen yang telah lengkap disediakan dalam resume anda.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border p-6">
+                        <form id="resume-form" onsubmit="event.preventDefault(); submitResume();">
+                            <div class="space-y-3 text-sm" id="resume-list"></div>
+                            <button type="submit" class="mt-6 bg-indigo-600 text-white py-2 px-6 rounded shadow-md">Semak Kelengkapan Resume</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Domain 5: Persediaan Temu Duga -->
+                <section id="temuduga" class="hidden-section fade-in max-w-5xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Persediaan Menghadapi Temu Duga</h2>
+                        <p class="text-gray-600 mt-1">Tandakan perkara yang telah anda sediakan/amalkan.</p>
+                    </div>
+                    <form id="temuduga-form" onsubmit="event.preventDefault(); submitTemuduga();" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white rounded-xl shadow-sm border p-5">
+                                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2">Sebelum Temu Duga</h3>
+                                <div class="space-y-2 text-xs" id="temuduga-sebelum"></div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-sm border p-5">
+                                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2">Semasa Temu Duga</h3>
+                                <div class="space-y-2 text-xs" id="temuduga-semasa"></div>
+                            </div>
+                        </div>
+                        <button type="submit" class="bg-indigo-600 text-white py-2.5 px-6 rounded-lg shadow-md hover:bg-indigo-700">Semak Kesediaan Temu Duga</button>
+                    </form>
+                </section>
+
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-gray-300 py-3 text-center text-xs z-10 relative shrink-0">
+            <p>Hak Cipta Amirul Ali JKM POLIMAS</p>
+        </footer>
+    </div>
+
+    <div id="result-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[60] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]" id="modal-content">
+            <div class="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl shrink-0">
+                <h3 class="text-lg font-bold text-gray-900" id="modal-title">Keputusan</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto" id="modal-body">
+                <!-- Content -->
+            </div>
+            <div class="p-4 border-t text-right bg-gray-50 rounded-b-2xl shrink-0">
+                <button onclick="closeModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==== Supabase ====
+        const SUPABASE_URL = 'https://trrbzocntfrzsbmurbpn.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_9EF7C75CmfjS3bEC-0wx_g_4XDlImjG';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Rekod pelajar & jawapan aktiviti disimpan sebagai log sedia-tambah (append-only):
+        // setiap log masuk/hantar aktiviti = satu baris baru dengan cap masa, bukan kemas kini
+        // baris sedia ada. Ini mengelak keperluan kebenaran SELECT pada anon key (yang akan
+        // mendedahkan No. KP/telefon semua pelajar), sekali gus menyimpan sejarah penuh setiap
+        // percubaan pelajar untuk semakan Penasihat Akademik/Pegawai Psikologi kemudian.
+
+        // Simpan jawapan aktiviti pelajar ke Supabase (tidak menghalang UI jika gagal/luar talian)
+        async function saveResponse(activityKey, payload) {
+            if (!currentUser.id) return;
+            try {
+                const { error } = await sb.from('activity_responses').insert({
+                    student_id: currentUser.id,
+                    activity_key: activityKey,
+                    payload: payload
+                });
+                if (error) console.warn('Gagal simpan ke Supabase:', activityKey, error);
+            } catch (err) {
+                console.warn('Gagal simpan ke Supabase:', activityKey, err);
+            }
+        }
+
+        // Papar/sembunyi menu & seksyen berdasarkan activity_config (ditetapkan oleh Panel Admin)
+        async function applyActivityConfig() {
+            try {
+                const { data, error } = await sb.from('activity_config').select('activity_key, is_active');
+                if (error || !data) return;
+                data.forEach(row => {
+                    const btn = document.querySelector(`#nav-menu button[data-activity="${row.activity_key}"]`);
+                    if (btn) btn.classList.toggle('hidden', !row.is_active);
+                });
+                document.querySelectorAll('.nav-group').forEach(group => {
+                    const buttons = group.querySelectorAll('button[data-activity]');
+                    const allHidden = buttons.length > 0 && Array.from(buttons).every(b => b.classList.contains('hidden'));
+                    group.classList.toggle('hidden', allHidden);
+                });
+            } catch (err) {
+                console.warn('Gagal muat konfigurasi aktiviti:', err);
+            }
+        }
+
+        // Data Pelajar
+        let currentUser = {};
+
+        async function handleLogin() {
+            currentUser = {
+                nama: document.getElementById('reg-nama').value,
+                matrik: document.getElementById('reg-matrik').value,
+                ic: document.getElementById('reg-ic').value,
+                tel: document.getElementById('reg-tel').value
+            };
+
+            try {
+                currentUser.id = crypto.randomUUID();
+                const { error } = await sb.from('students').insert({
+                    id: currentUser.id,
+                    nama: currentUser.nama,
+                    no_matrik: currentUser.matrik,
+                    no_ic: currentUser.ic,
+                    no_tel: currentUser.tel
+                });
+                if (error) console.warn('Gagal simpan pelajar ke Supabase:', error);
+            } catch (err) {
+                console.warn('Gagal simpan pelajar ke Supabase:', err);
+            }
+
+            document.getElementById('display-nama').innerText = currentUser.nama;
+            document.getElementById('display-matrik').innerText = currentUser.matrik;
+            document.getElementById('display-ic').innerText = currentUser.ic;
+            document.getElementById('display-tel').innerText = currentUser.tel;
+            document.getElementById('header-user-name').innerText = currentUser.nama;
+
+            document.getElementById('login-screen').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').classList.remove('hidden-section');
+            }, 500);
+
+            applyActivityConfig();
+        }
+
+        function logout() {
+            document.getElementById('main-app').classList.add('hidden-section');
+            document.getElementById('login-screen').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('login-screen').classList.remove('opacity-0');
+                document.getElementById('login-form').reset();
+            }, 50);
+            showSection('home', document.querySelector('#nav-menu button')); // reset to home
+        }
+
+        // Navigation
+        const sidebar = document.getElementById('sidebar');
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar');
+
+        mobileBtn.addEventListener('click', () => {
+            sidebar.classList.remove('hidden');
+            sidebar.classList.add('flex', 'fixed', 'inset-y-0', 'left-0', 'w-64', 'z-50');
+        });
+
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('hidden');
+            sidebar.classList.remove('flex', 'fixed');
+        });
+
+        function showSection(sectionId, element) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden-section'));
+            document.getElementById(sectionId).classList.remove('hidden-section');
+            
+            document.querySelectorAll('#nav-menu button').forEach(btn => btn.classList.remove('active-nav'));
+            element.classList.add('active-nav');
+
+            if(window.innerWidth < 768) {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('flex', 'fixed');
+            }
+        }
+
+        // Modal Logic
+        const modal = document.getElementById('result-modal');
+        const modalContent = document.getElementById('modal-content');
+        
+        function showModal(title, html) {
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-body').innerHTML = html;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // ==== Panel Admin ====
+        // NOTA KESELAMATAN: Ini adalah aplikasi HTML tunggal tanpa server backend, jadi
+        // sekatan ini hanya di peringkat antara muka (client-side), BUKAN dikuatkuasakan
+        // oleh pangkalan data. Sesiapa yang mahir boleh memintas ini melalui devtools.
+        // Tukar kata laluan di bawah, dan jangan simpan sebarang data sensitif dalam
+        // activity_config kerana ia boleh dibaca/ditulis oleh sesiapa yang memegang anon key.
+        const ADMIN_PASSWORD = 'MInD@Admin2026';
+
+        function openAdmin() {
+            document.getElementById('admin-screen').classList.remove('hidden-section');
+            document.getElementById('admin-login-box').classList.remove('hidden');
+            document.getElementById('admin-panel-box').classList.add('hidden');
+            document.getElementById('admin-login-error').classList.add('hidden');
+            document.getElementById('admin-password').value = '';
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-screen').classList.add('hidden-section');
+        }
+
+        async function adminLogin() {
+            const pw = document.getElementById('admin-password').value;
+            if (pw !== ADMIN_PASSWORD) {
+                document.getElementById('admin-login-error').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('admin-login-box').classList.add('hidden');
+            document.getElementById('admin-panel-box').classList.remove('hidden');
+            await loadAdminActivities();
+        }
+
+        async function loadAdminActivities() {
+            const list = document.getElementById('admin-activity-list');
+            list.innerHTML = '<p class="text-sm text-gray-500">Memuatkan...</p>';
+            try {
+                const { data, error } = await sb.from('activity_config').select('*').order('sort_order');
+                if (error || !data) { list.innerHTML = '<p class="text-sm text-red-600">Gagal memuat senarai aktiviti.</p>'; return; }
+                const grouped = {};
+                data.forEach(row => { (grouped[row.domain] = grouped[row.domain] || []).push(row); });
+                list.innerHTML = Object.entries(grouped).map(([domain, rows]) => `
+                    <div class="mb-4">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">${domain}</p>
+                        ${rows.map(r => `
+                            <label class="flex items-center justify-between py-2 border-b border-gray-100 text-sm">
+                                <span class="${r.is_active ? 'text-gray-700' : 'text-gray-400 line-through'}">${r.label}</span>
+                                <input type="checkbox" ${r.is_active ? 'checked' : ''} onchange="toggleActivity('${r.activity_key}', this.checked)" class="w-5 h-5 accent-indigo-600 cursor-pointer">
+                            </label>
+                        `).join('')}
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = '<p class="text-sm text-red-600">Ralat sambungan ke Supabase.</p>';
+            }
+        }
+
+        async function toggleActivity(activityKey, isActive) {
+            try {
+                const { error } = await sb.from('activity_config').update({ is_active: isActive, updated_at: new Date().toISOString() }).eq('activity_key', activityKey);
+                if (error) { console.warn('Gagal kemaskini status aktiviti:', error); await loadAdminActivities(); return; }
+                await loadAdminActivities();
+                applyActivityConfig();
+            } catch (err) {
+                console.warn('Gagal kemaskini status aktiviti:', err);
+            }
+        }
+
+        const ipwQ = [
+            {q: "Saya seorang yang...", opts: [{v:"e", t:"Berdisiplin & patuh peraturan"}, {v:"h", t:"Tenang & berpengetahuan"}, {v:"b", t:"Penyayang & harmoni"}, {v:"j", t:"Spontan & berani"}]},
+            {q: "Apabila bekerja, saya suka...", opts: [{v:"e", t:"Sistematik & tradisional"}, {v:"h", t:"Menganalisis & mencari fakta"}, {v:"b", t:"Bekerjasama & harmoni"}, {v:"j", t:"Bebas & sukakan cabaran"}]}
+        ];
+        
+        const ipwContainer = document.getElementById('ipw-questions');
+        ipwQ.forEach((item, i) => {
+            let html = `<div class="bg-gray-50 p-4 rounded border"><p class="font-medium mb-2">${i+1}. ${item.q}</p><div class="space-y-2">`;
+            item.opts.forEach(opt => {
+                html += `<label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="ipw${i}" value="${opt.v}" required class="text-indigo-600"> ${opt.t}</label>`;
+            });
+            ipwContainer.innerHTML += html + `</div></div>`;
+        });
+
+        function submitIPW() {
+            const formData = new FormData(document.getElementById('ipw-form'));
+            let counts = {e:0, h:0, b:0, j:0};
+            for (let val of formData.values()) counts[val]++;
+            
+            let html = `<div class="text-center"><p class="mb-4">Berdasarkan pilihan ringkas anda:</p>`;
+            if(counts.e > 0) html += `<div class="bg-yellow-100 text-yellow-800 p-3 rounded mb-2 font-bold">EMAS: Patuh peraturan, sistematik.</div>`;
+            if(counts.h > 0) html += `<div class="bg-green-100 text-green-800 p-3 rounded mb-2 font-bold">HIJAU: Analitikal, berfikir.</div>`;
+            if(counts.b > 0) html += `<div class="bg-blue-100 text-blue-800 p-3 rounded mb-2 font-bold">BIRU: Emosi, kasih sayang.</div>`;
+            if(counts.j > 0) html += `<div class="bg-orange-100 text-orange-800 p-3 rounded mb-2 font-bold">JINGGA: Spontan, kebebasan.</div>`;
+            html += `<p class="text-xs text-gray-500 mt-4">*Ini adalah versi ringkas. Rujuk kaunselor untuk Ujian Psikometrik sebenar.</p></div>`;
+            showModal("Keputusan IPW", html);
+            saveResponse('psikometrik', { counts });
+        }
+
+        function submitSMART() {
+            const s = document.getElementById('smart-s').value;
+            const m = document.getElementById('smart-m').value;
+            const a = document.getElementById('smart-a').value;
+            const r = document.getElementById('smart-r').value;
+            const t = document.getElementById('smart-t').value;
+            
+            let html = `
+                <div class="bg-indigo-50 p-5 rounded-xl border border-indigo-100 text-center">
+                    <i class="fas fa-trophy text-4xl text-yellow-500 mb-3"></i>
+                    <h4 class="font-bold text-lg text-indigo-900 mb-3">Ikrar Matlamat Saya</h4>
+                    <p class="text-gray-700 italic leading-relaxed">
+                        "Saya berazam untuk mencapai <strong>${s}</strong> (diukur dengan <strong>${m}</strong>). Saya akan memastikan ini tercapai dengan <strong>${a}</strong>, kerana ia sangat penting untuk <strong>${r}</strong>. Saya mesti mencapainya <strong>${t}</strong>."
+                    </p>
+                </div>
+            `;
+            showModal("Matlamat i-SMART Disimpan", html);
+            saveResponse('smart', { s, m, a, r, t });
+        }
+
+        // SWOT
+        function submitSWOT() {
+            const payload = {
+                s: document.getElementById('swot-s').value,
+                w: document.getElementById('swot-w').value,
+                o: document.getElementById('swot-o').value,
+                t: document.getElementById('swot-t').value
+            };
+            showModal("Rumusan SWOT", `<p class="text-center text-gray-700">Tahniah! Anda telah mengenal pasti potensi dan cabaran diri anda. Gunakan kekuatan anda untuk merebut peluang yang ada.</p>`);
+            saveResponse('swot', payload);
+        }
+
+        function addPnmRow() {
+            const tbody = document.getElementById('pnm-tbody');
+            const tr = document.createElement('tr');
+            tr.className = 'border-b';
+            tr.innerHTML = `
+                <td class="p-2"><input type="text" class="w-full p-2 border rounded text-sm" placeholder="Nama Subjek"></td>
+                <td class="p-2"><input type="number" min="1" class="w-16 p-2 border rounded text-center credit text-sm" value="3"></td>
+                <td class="p-2">
+                    <select class="w-20 p-2 border rounded grade text-sm">
+                        <option value="4.00">A</option><option value="3.67">A-</option>
+                        <option value="3.33">B+</option><option value="3.00">B</option>
+                        <option value="2.67">B-</option><option value="2.00">C</option>
+                        <option value="0.00">F</option>
+                    </select>
+                </td>
+                <td class="p-2 text-center"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+        
+        // Add 3 default rows
+        for(let i=0; i<3; i++) addPnmRow();
+
+        function calculatePNM() {
+            let totalCr = 0, totalPt = 0;
+            document.querySelectorAll('#pnm-tbody tr').forEach(tr => {
+                const cr = parseFloat(tr.querySelector('.credit').value) || 0;
+                const gr = parseFloat(tr.querySelector('.grade').value) || 0;
+                totalCr += cr;
+                totalPt += (cr * gr);
+            });
+            
+            if(totalCr === 0) return showModal("Ralat", "Sila masukkan jam kredit.");
+            let pnm = (totalPt / totalCr).toFixed(2);
+            showModal("Keputusan Wawasan PNM", `
+                <div class="text-center">
+                    <h1 class="text-5xl font-bold text-indigo-600 mb-2">${pnm}</h1>
+                    <p class="text-gray-600">Teruskan usaha untuk mencapai sasaran anda!</p>
+                </div>
+            `);
+            saveResponse('pnm', { totalCr, totalPt, pnm: parseFloat(pnm) });
+        }
+
+        const my3sList = [
+            "Boleh berkomunikasi dengan jelas dan yakin.",
+            "Boleh bekerjasama dalam kumpulan.",
+            "Berfikir secara kritis menyelesaikan masalah.",
+            "Mampu mencari maklumat untuk pembelajaran berterusan.",
+            "Mempunyai ciri kepimpinan.",
+            "Minat meneroka peluang keusahawanan.",
+            "Mengamalkan etika dan moral profesional."
+        ];
+        const my3sContainer = document.getElementById('my3s-list');
+        my3sList.forEach((item, i) => {
+            my3sContainer.innerHTML += `
+                <label class="flex items-start gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                    <input type="checkbox" name="m3q${i}" class="mt-1 text-indigo-600 w-4 h-4">
+                    <span>${item}</span>
+                </label>
+            `;
+        });
+        function submitMy3S() {
+            let chk = document.querySelectorAll('#my3s-list input:checked').length;
+            showModal("Audit My3S", `<div class="text-center"><p class="text-2xl font-bold text-indigo-600 mb-2">${chk} / 7 Kemahiran</p><p class="text-gray-600">Terus sertai program i-SMART untuk memperkasakan lagi kemahiran insaniah anda.</p></div>`);
+            saveResponse('my3s', { checked: chk, total: my3sList.length });
+        }
+
+        const createRadioQuestions = (containerId, questions, prefix) => {
+            const container = document.getElementById(containerId);
+            questions.forEach((q, i) => {
+                container.innerHTML += `
+                    <div class="bg-gray-50 p-4 rounded border text-sm">
+                        <p class="font-medium mb-3">${i+1}. ${q}</p>
+                        <div class="flex gap-4">
+                            <label><input type="radio" name="${prefix}${i}" value="1" required> Jarang</label>
+                            <label><input type="radio" name="${prefix}${i}" value="2" required> Kadang</label>
+                            <label><input type="radio" name="${prefix}${i}" value="3" required> Kerap</label>
+                        </div>
+                    </div>`;
+            });
+        };
+
+        createRadioQuestions('pengucapan-questions', [
+            "Bertentang mata semasa berkomunikasi.",
+            "Menunjukkan minat mendengar dengan mengangguk.",
+            "Suara jelas dan mudah difahami.",
+            "Menghargai pandangan orang lain."
+        ], 'pq');
+
+        createRadioQuestions('tegas-questions', [
+            "Saya boleh bercakap dengan yakin ketika ada percanggahan.",
+            "Saya mudah meminta pertolongan jika ragu-ragu.",
+            "Saya berani menyatakan 'TIDAK' tanpa rasa bersalah.",
+            "Saya sedia menerima teguran."
+        ], 'td');
+
+        function submitPengucapan() {
+            let score = 0;
+            new FormData(document.getElementById('pengucapan-form')).forEach(v => score += parseInt(v));
+            showModal("Pengucapan Efektif", `<div class="text-center"><p class="text-3xl font-bold text-blue-600 mb-2">Skor: ${score}</p><p class="text-gray-600 text-sm">Semakin tinggi skor, semakin berkesan cara komunikasi anda.</p></div>`);
+            saveResponse('pengucapan', { score });
+        }
+
+        function submitTegas() {
+            let score = 0;
+            new FormData(document.getElementById('tegas-form')).forEach(v => score += parseInt(v));
+            showModal("Tegas Diri", `<div class="text-center"><p class="text-3xl font-bold text-emerald-600 mb-2">Skor: ${score}</p><p class="text-gray-600 text-sm">Skor yang tinggi menunjukkan anda asertif dan yakin diri.</p></div>`);
+            saveResponse('tegasdiri', { score });
+        }
+
+        // DASS-21 (Depression Anxiety Stress Scale, Lovibond & Lovibond 1995) - 7 item setiap subskala
+        const dassQ = [
+            {sub:'d', q:"Saya rasa tiada apa yang boleh saya nantikan dalam hidup ini."},
+            {sub:'a', q:"Saya rasa mulut saya kering."},
+            {sub:'s', q:"Saya rasa susah untuk bertenang."},
+            {sub:'d', q:"Saya rasa susah untuk memulakan sesuatu kerja."},
+            {sub:'a', q:"Saya mengalami kesukaran bernafas (cth: nafas cepat/tercungap walaupun tanpa bersenam)."},
+            {sub:'s', q:"Saya mudah rasa kecewa atau bertindak berlebihan terhadap sesuatu situasi."},
+            {sub:'d', q:"Saya tidak berupaya rasa teruja tentang apa-apa perkara."},
+            {sub:'a', q:"Saya rasa tangan atau badan saya menggeletar."},
+            {sub:'s', q:"Saya rasa banyak tenaga digunakan kerana perasaan resah."},
+            {sub:'d', q:"Saya rasa sedih dan murung."},
+            {sub:'a', q:"Saya bimbang tentang situasi yang mungkin menyebabkan saya panik."},
+            {sub:'s', q:"Saya mudah gelisah."},
+            {sub:'d', q:"Saya rasa diri saya kurang berharga sebagai seorang manusia."},
+            {sub:'a', q:"Saya rasa hampir panik."},
+            {sub:'s', q:"Saya rasa susah untuk bertenang selepas sesuatu yang mengganggu saya."},
+            {sub:'d', q:"Saya rasa hidup ini tiada makna."},
+            {sub:'a', q:"Saya sedar akan degupan jantung saya walaupun tanpa bersenam."},
+            {sub:'s', q:"Saya tidak sabar menghadapi gangguan semasa melakukan sesuatu."},
+            {sub:'d', q:"Saya tidak dapat merasai sebarang perasaan positif langsung."},
+            {sub:'a', q:"Saya berasa takut tanpa sebab yang munasabah."},
+            {sub:'s', q:"Saya rasa mudah tersinggung."}
+        ];
+        const dassScaleLabels = ["Tidak Berkaitan Dengan Saya Langsung", "Sesuai Dengan Saya Pada Suatu Masa / Kadang-Kala", "Sesuai Dengan Saya Pada Kebanyakan Masa", "Sangat Sesuai Dengan Saya / Sentiasa"];
+        const dassContainer = document.getElementById('dass-questions');
+        dassQ.forEach((item, i) => {
+            let opts = dassScaleLabels.map((lbl, v) => `<label class="flex items-start gap-2 text-xs sm:text-sm"><input type="radio" name="dq${i}" value="${v}" required class="mt-0.5"> ${v} - ${lbl}</label>`).join('');
+            dassContainer.innerHTML += `
+                <div class="bg-gray-50 p-4 rounded border text-sm">
+                    <p class="font-medium mb-3">${i+1}. ${item.q}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${opts}</div>
+                </div>`;
+        });
+
+        function dassSeverity(sub, score) {
+            const bands = {
+                d: [[9,'Normal'],[13,'Ringan'],[20,'Sederhana'],[27,'Teruk'],[Infinity,'Sangat Teruk']],
+                a: [[7,'Normal'],[9,'Ringan'],[14,'Sederhana'],[19,'Teruk'],[Infinity,'Sangat Teruk']],
+                s: [[14,'Normal'],[18,'Ringan'],[25,'Sederhana'],[33,'Teruk'],[Infinity,'Sangat Teruk']]
+            };
+            for (const [max, label] of bands[sub]) if (score <= max) return label;
+        }
+
+        function submitDASS() {
+            const formData = new FormData(document.getElementById('dass-form'));
+            let raw = {d:0, a:0, s:0};
+            for (const [name, val] of formData.entries()) {
+                const i = parseInt(name.replace('dq', ''));
+                raw[dassQ[i].sub] += parseInt(val);
+            }
+            // Skor DASS-21 didarab 2 untuk selaras dengan skala rujukan DASS-42
+            const score = {d: raw.d * 2, a: raw.a * 2, s: raw.s * 2};
+            const sev = {d: dassSeverity('d', score.d), a: dassSeverity('a', score.a), s: dassSeverity('s', score.s)};
+
+            const rowColor = (lvl) => ({'Normal':'text-green-600','Ringan':'text-yellow-600','Sederhana':'text-orange-600','Teruk':'text-red-600','Sangat Teruk':'text-red-800'})[lvl];
+            const needsHelp = [sev.d, sev.a, sev.s].some(l => ['Sederhana','Teruk','Sangat Teruk'].includes(l));
+            const urgent = [sev.d, sev.a, sev.s].some(l => ['Teruk','Sangat Teruk'].includes(l));
+
+            let html = `<div class="space-y-3">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-500">Depresi</p><p class="text-2xl font-bold">${score.d}</p><p class="font-semibold ${rowColor(sev.d)}">${sev.d}</p></div>
+                    <div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-500">Kebimbangan</p><p class="text-2xl font-bold">${score.a}</p><p class="font-semibold ${rowColor(sev.a)}">${sev.a}</p></div>
+                    <div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-500">Stres</p><p class="text-2xl font-bold">${score.s}</p><p class="font-semibold ${rowColor(sev.s)}">${sev.s}</p></div>
+                </div>`;
+            if (urgent) {
+                html += `<div class="bg-red-100 text-red-800 p-3 rounded text-sm font-medium"><i class="fas fa-triangle-exclamation mr-1"></i> ** Amat memerlukan bantuan. Sila segera rujuk Pegawai Psikologi (Kaunselor) untuk sesi bimbingan.</div>`;
+            } else if (needsHelp) {
+                html += `<div class="bg-yellow-100 text-yellow-800 p-3 rounded text-sm font-medium"><i class="fas fa-circle-exclamation mr-1"></i> * Disaran untuk mendapatkan bantuan. Sila rujuk Pegawai Psikologi (Kaunselor) untuk sesi bimbingan.</div>`;
+            } else {
+                html += `<div class="bg-green-100 text-green-800 p-3 rounded text-sm font-medium"><i class="fas fa-circle-check mr-1"></i> Tahap kesihatan mental anda berada pada julat normal. Teruskan amalan positif ini!</div>`;
+            }
+            html += `</div>`;
+            showModal("Keputusan DASS-21", html);
+            saveResponse('dass', { raw, score, severity: sev });
+        }
+
+        function submitJatiDiri() {
+            const payload = {
+                nama: document.getElementById('jd-nama').value,
+                nilai: document.getElementById('jd-nilai').value,
+                akademik: document.getElementById('jd-akademik').value,
+                bukan: document.getElementById('jd-bukan').value
+            };
+            showModal("Jati Diri Disimpan", `<p class="text-center">Maklumat penglibatan dan role model anda telah direkodkan. Jadikan ini inspirasi memajukan diri!</p>`);
+            saveResponse('jatidiri', payload);
+        }
+
+        function submitMasa() {
+            const payload = {
+                q1: document.getElementById('q1').value,
+                q2: document.getElementById('q2').value,
+                q3: document.getElementById('q3').value,
+                q4: document.getElementById('q4').value
+            };
+            showModal("Pengurusan Masa", `<div class="text-center"><p class="text-gray-700 mb-3">Orang yang efektif akan banyak meluangkan masa pada <strong>Kuadran 2 (Penting, Tidak Segera)</strong> untuk perancangan dan elak penangguhan.</p></div>`);
+            saveResponse('masa', payload);
+        }
+
+        const vakQ = [
+            {q:"Bila membaca arahan baru, saya:", o:[{v:'v',t:"Baca manual"}, {v:'a',t:"Tanya orang"}, {v:'k',t:"Cuba sendiri"}]},
+            {q:"Masa lapang saya suka:", o:[{v:'v',t:"Tonton wayang/baca"}, {v:'a',t:"Dengar muzik/borak"}, {v:'k',t:"Bersukan/DIY"}]}
+        ];
+        const vakContainer = document.getElementById('vak-questions');
+        vakQ.forEach((item, i) => {
+            let html = `<div class="bg-gray-50 p-4 rounded border text-sm"><p class="font-medium mb-3">${i+1}. ${item.q}</p><div class="space-y-2">`;
+            item.o.forEach(opt => {
+                html += `<label class="block"><input type="radio" name="vq${i}" value="${opt.v}" required> ${opt.t}</label>`;
+            });
+            vakContainer.innerHTML += html + `</div></div>`;
+        });
+        
+        function submitVAK() {
+            const formData = new FormData(document.getElementById('vak-form'));
+            let counts = {v:0, a:0, k:0};
+            for (let val of formData.values()) counts[val]++;
+            
+            let max = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+            let result = max === 'v' ? 'VISUAL (Suka membaca & melihat)' : max === 'a' ? 'AUDITORI (Suka mendengar & berbincang)' : 'KINESTETIK (Suka praktikal & pergerakan)';
+            
+            showModal("Gaya Pembelajaran Dominan", `<div class="text-center"><p class="text-2xl font-bold text-indigo-600 mb-2">${result}</p></div>`);
+            saveResponse('vak', { counts, result });
+        }
+
+        // Domain 5: Pilihan Kerjaya
+        const kerjayaOpts = {
+            p1: [
+                "Saya telah bersedia memasuki alam pekerjaan.",
+                "Saya yakin mempunyai pengetahuan dan kemahiran yang diperlukan dalam bidang pekerjaan.",
+                "Saya sedia menerima tanggungjawab dalam dunia pekerjaan.",
+                "Saya ingin berdikari mencari punca pendapatan sendiri.",
+                "Saya ingin membantu keluarga yang memerlukan sumber kewangan.",
+                "Saya berhasrat memikul tanggungjawab kekeluargaan dalam masa terdekat."
+            ],
+            p2: [
+                "Saya sangat berminat untuk menjadi usahawan atau bekerja sendiri.",
+                "Saya lebih berminat bekerja tanpa arahan daripada ketua.",
+                "Saya yakin berkemampuan mengendalikan urusan perniagaan sendiri.",
+                "Saya boleh mendapatkan maklumat mengenai sumber modal perniagaan.",
+                "Saya seorang yang berinisiatif dan rajin berusaha.",
+                "Saya yakin usaha saya mendapat sokongan padu keluarga."
+            ],
+            p3: [
+                "HPNM saya sekurang-kurangnya 3.00.",
+                "Saya sangat berminat untuk melanjutkan pengajian ke peringkat lebih tinggi.",
+                "Saya bercita-cita meningkatkan tahap kemahiran dalam bidang TVET.",
+                "Saya belum bersedia memasuki alam pekerjaan.",
+                "Saya akan berusaha mencari sumber kewangan bagi membiayai pengajian.",
+                "Keluarga menyokong saya untuk melanjutkan pengajian."
+            ]
+        };
+        Object.keys(kerjayaOpts).forEach(key => {
+            const container = document.getElementById(`kerjaya-${key}`);
+            kerjayaOpts[key].forEach((item, i) => {
+                container.innerHTML += `<label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" name="${key}q${i}" class="mt-0.5"> <span>${item}</span></label>`;
+            });
+        });
+        function submitKerjaya() {
+            const labels = {p1:'Mencari Pekerjaan', p2:'Usahawan / Bekerja Sendiri', p3:'Melanjutkan Pengajian'};
+            let counts = {p1:0, p2:0, p3:0};
+            Object.keys(counts).forEach(key => {
+                counts[key] = document.querySelectorAll(`#kerjaya-${key} input:checked`).length;
+            });
+            const maxCount = Math.max(...Object.values(counts));
+            const winners = Object.keys(counts).filter(k => counts[k] === maxCount && maxCount > 0).map(k => labels[k]);
+            let html = `<div class="space-y-3">
+                <div class="grid grid-cols-3 gap-3 text-center text-sm">
+                    <div class="bg-blue-50 rounded p-2"><p class="text-xs text-gray-500">Kerjaya</p><p class="text-xl font-bold text-blue-700">${counts.p1}/6</p></div>
+                    <div class="bg-emerald-50 rounded p-2"><p class="text-xs text-gray-500">Usahawan</p><p class="text-xl font-bold text-emerald-700">${counts.p2}/6</p></div>
+                    <div class="bg-purple-50 rounded p-2"><p class="text-xs text-gray-500">Pengajian</p><p class="text-xl font-bold text-purple-700">${counts.p3}/6</p></div>
+                </div>
+                <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-center">
+                    <p class="text-sm text-gray-700">Kecenderungan tertinggi anda: <strong>${winners.length ? winners.join(' & ') : 'Belum dapat ditentukan'}</strong></p>
+                    <p class="text-xs text-gray-500 mt-1">*Pilihan terbaik tetap berdasarkan keupayaan dan kecenderungan diri anda sendiri. Rujuk Pegawai Psikologi/Penasihat Akademik untuk bimbingan lanjut.</p>
+                </div>
+            </div>`;
+            showModal("Kecenderungan Kecemerlangan Kerjaya", html);
+            saveResponse('kerjaya', { counts, winners });
+        }
+
+        // Domain 5: Semakan Resume
+        const resumeItems = [
+            "Butiran Peribadi lengkap (nama, No. KP, alamat, no. telefon, e-mel).",
+            "Kelayakan Akademik dinyatakan jelas (peringkat, CGPA/gred, institusi & tahun).",
+            "Pengalaman Bekerja / Latihan Industri disenaraikan (jawatan, tempoh, ringkasan tugasan).",
+            "Aktiviti Ko-Kurikulum / Sukan disenaraikan dengan peringkat penyertaan.",
+            "Aktiviti Sukarelawan / Khidmat Masyarakat disenaraikan.",
+            "Kemahiran Bahasa dan kemahiran lain (ICT/teknikal) dinyatakan.",
+            "Sekurang-kurangnya 2 Rujukan (referee) disertakan.",
+            "Resume telah disemak ejaan/tatabahasa, kemas dan tidak melebihi 2 muka surat."
+        ];
+        const resumeContainer = document.getElementById('resume-list');
+        resumeItems.forEach((item, i) => {
+            resumeContainer.innerHTML += `
+                <label class="flex items-start gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                    <input type="checkbox" name="rq${i}" class="mt-1 text-indigo-600 w-4 h-4">
+                    <span>${item}</span>
+                </label>`;
+        });
+        function submitResume() {
+            let chk = document.querySelectorAll('#resume-list input:checked').length;
+            const pct = Math.round((chk / resumeItems.length) * 100);
+            showModal("Kelengkapan Resume", `<div class="text-center"><p class="text-2xl font-bold text-indigo-600 mb-2">${chk} / ${resumeItems.length} Komponen (${pct}%)</p><p class="text-gray-600 text-sm">${pct === 100 ? 'Tahniah! Resume anda sudah lengkap dan bersedia untuk dihantar.' : 'Lengkapkan komponen yang belum ditanda sebelum menghantar resume anda kepada bakal majikan.'}</p></div>`);
+            saveResponse('resume', { checked: chk, total: resumeItems.length, pct });
+        }
+
+        // Domain 5: Persediaan Temu Duga
+        const temudugaSebelum = [
+            "Fail sijil asal & salinan disahkan disediakan dengan kemas.",
+            "Salinan kad pengenalan turut disertakan.",
+            "Resume yang lengkap disediakan.",
+            "Surat panggilan temu duga & dokumen berkaitan dibawa.",
+            "Bidang tugas jawatan yang dimohon telah dikenal pasti.",
+            "Maklumat/profil syarikat & bakal majikan telah didapatkan.",
+            "Pengetahuan asas bidang/jawatan telah disiapkan.",
+            "Pakaian sesuai (formal, kemas, warna lembut) telah disediakan."
+        ];
+        const temudugaSemasa = [
+            "Hadir sekurang-kurangnya 30 minit lebih awal.",
+            "Memberi salam dengan sopan semasa masuk.",
+            "Duduk & berdiri dengan tegak dan sopan.",
+            "Sentiasa tenang, senyum & memandang panel penemuduga.",
+            "Bercakap dengan nada jelas dan boleh difahami.",
+            "Menjawab soalan dengan tenang termasuk soalan provokasi.",
+            "Menerangkan sumbangan & pencapaian kualiti kerja diri.",
+            "Memberi ucapan terima kasih selepas temu duga."
+        ];
+        const fillTemuduga = (containerId, items, prefix) => {
+            const container = document.getElementById(containerId);
+            items.forEach((item, i) => {
+                container.innerHTML += `<label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" name="${prefix}${i}" class="mt-0.5"> <span>${item}</span></label>`;
+            });
+        };
+        fillTemuduga('temuduga-sebelum', temudugaSebelum, 'tds');
+        fillTemuduga('temuduga-semasa', temudugaSemasa, 'tdm');
+        function submitTemuduga() {
+            const total = temudugaSebelum.length + temudugaSemasa.length;
+            const chk = document.querySelectorAll('#temuduga-form input:checked').length;
+            const pct = Math.round((chk / total) * 100);
+            showModal("Kesediaan Temu Duga", `<div class="text-center"><p class="text-2xl font-bold text-indigo-600 mb-2">${chk} / ${total} (${pct}%)</p><p class="text-gray-600 text-sm">${pct >= 80 ? 'Tahniah! Anda kelihatan bersedia untuk menghadapi temu duga.' : 'Teruskan persediaan pada perkara yang belum ditanda agar lebih yakin semasa temu duga.'}</p></div>`);
+            saveResponse('temuduga', { checked: chk, total, pct });
+        }
+
+    </script>
+</body>
+</html>
