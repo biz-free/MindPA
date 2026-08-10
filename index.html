@@ -84,21 +84,35 @@
 
     <!-- Panel Admin -->
     <div id="admin-screen" class="hidden-section fixed inset-0 bg-gray-900/70 z-[70] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
             <div class="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl shrink-0">
                 <h3 class="text-lg font-bold text-gray-900"><i class="fas fa-user-shield mr-2 text-indigo-600"></i>Panel Admin</h3>
                 <button onclick="closeAdmin()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
             </div>
             <div class="p-6 overflow-y-auto">
                 <div id="admin-login-box">
-                    <p class="text-sm text-gray-600 mb-4">Masukkan kata laluan admin untuk urus status aktif/tidak aktif setiap aktiviti.</p>
+                    <p class="text-sm text-gray-600 mb-4">Masukkan kata laluan admin untuk urus aktiviti dan lihat data pelajar.</p>
                     <input type="password" id="admin-password" placeholder="Kata Laluan Admin" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 mb-2" onkeydown="if(event.key==='Enter') adminLogin();">
                     <p id="admin-login-error" class="text-xs text-red-600 mb-3 hidden">Kata laluan salah. Sila cuba lagi.</p>
                     <button onclick="adminLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition">Log Masuk</button>
                 </div>
                 <div id="admin-panel-box" class="hidden">
-                    <p class="text-sm text-gray-600 mb-4">Togol untuk papar/sembunyi aktiviti daripada menu pelajar. Perubahan berkuat kuasa serta-merta.</p>
-                    <div id="admin-activity-list"></div>
+                    <div class="flex gap-2 mb-4 border-b">
+                        <button id="admin-tab-btn-activities" onclick="switchAdminTab('activities')" class="px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600">Urus Aktiviti</button>
+                        <button id="admin-tab-btn-students" onclick="switchAdminTab('students')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-600">Data Pelajar & Rumusan</button>
+                    </div>
+                    <div id="admin-tab-activities">
+                        <p class="text-sm text-gray-600 mb-4">Togol untuk papar/sembunyi aktiviti daripada menu pelajar. Perubahan berkuat kuasa serta-merta.</p>
+                        <div id="admin-activity-list"></div>
+                    </div>
+                    <div id="admin-tab-students" class="hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="text-sm text-gray-600">Senarai pelajar yang telah mendaftar & rumusan aktiviti terkini mereka.</p>
+                            <button onclick="loadAdminStudents()" class="text-indigo-600 text-xs font-medium hover:underline shrink-0 ml-2"><i class="fas fa-rotate mr-1"></i>Muat Semula</button>
+                        </div>
+                        <input type="text" id="admin-student-search" placeholder="Cari nama / no. matrik..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 mb-3" oninput="renderAdminStudents()">
+                        <div id="admin-student-list"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -711,6 +725,8 @@
             document.getElementById('admin-panel-box').classList.add('hidden');
             document.getElementById('admin-login-error').classList.add('hidden');
             document.getElementById('admin-password').value = '';
+            adminStudentsData = null;
+            switchAdminTab('activities');
         }
 
         function closeAdmin() {
@@ -761,6 +777,109 @@
             } catch (err) {
                 console.warn('Gagal kemaskini status aktiviti:', err);
             }
+        }
+
+        // ==== Data Pelajar & Rumusan ====
+        function switchAdminTab(tab) {
+            const isActivities = tab === 'activities';
+            document.getElementById('admin-tab-activities').classList.toggle('hidden', !isActivities);
+            document.getElementById('admin-tab-students').classList.toggle('hidden', isActivities);
+            document.getElementById('admin-tab-btn-activities').classList.toggle('border-indigo-600', isActivities);
+            document.getElementById('admin-tab-btn-activities').classList.toggle('text-indigo-600', isActivities);
+            document.getElementById('admin-tab-btn-activities').classList.toggle('border-transparent', !isActivities);
+            document.getElementById('admin-tab-btn-activities').classList.toggle('text-gray-500', !isActivities);
+            document.getElementById('admin-tab-btn-students').classList.toggle('border-indigo-600', !isActivities);
+            document.getElementById('admin-tab-btn-students').classList.toggle('text-indigo-600', !isActivities);
+            document.getElementById('admin-tab-btn-students').classList.toggle('border-transparent', isActivities);
+            document.getElementById('admin-tab-btn-students').classList.toggle('text-gray-500', isActivities);
+            if (!isActivities && !adminStudentsData) loadAdminStudents();
+        }
+
+        const ACTIVITY_LABELS = {
+            psikometrik: 'Ujian Psikometrik (IPW)', smart: 'Matlamat i-SMART', swot: 'Analisis SWOT',
+            pnm: 'Kalkulator PNM', my3s: 'My3S (Insaniah)', pengucapan: 'Pengucapan Efektif',
+            tegasdiri: 'Tegas Diri (Asertif)', dass: 'Pengurusan Stres (DASS-21)', jatidiri: 'Pemerkasaan Jati Diri',
+            masa: 'Pengurusan Masa', vak: 'Gaya Belajar VAK', kerjaya: 'Pilihan Kerjaya',
+            resume: 'Semakan Resume', temuduga: 'Persediaan Temu Duga'
+        };
+
+        function formatActivitySummary(key, p) {
+            try {
+                switch (key) {
+                    case 'psikometrik': {
+                        const labels = {e:'EMAS',h:'HIJAU',b:'BIRU',j:'JINGGA'};
+                        const dom = Object.keys(p.counts).reduce((a,b)=>p.counts[a]>=p.counts[b]?a:b);
+                        return `Dominan: <strong>${labels[dom]}</strong> (E:${p.counts.e} H:${p.counts.h} B:${p.counts.b} J:${p.counts.j})`;
+                    }
+                    case 'smart': return `"${p.s || '-'}" (${p.t || '-'})`;
+                    case 'swot': return `K:${(p.s||'').slice(0,25)}... L:${(p.w||'').slice(0,25)}...`;
+                    case 'pnm': return `PNM: <strong>${p.pnm}</strong> (${p.totalCr} jam kredit)`;
+                    case 'my3s': return `${p.checked} / ${p.total} kriteria ditanda 'Ya'`;
+                    case 'pengucapan': return `Skor ${p.score}/30 - ${p.tafsiran}`;
+                    case 'tegasdiri': return `Skor ${p.score}/80 - ${p.tafsiran}`;
+                    case 'dass': return `Stres: <strong>${p.severity.s}</strong>, Kebimbangan: <strong>${p.severity.a}</strong>, Kemurungan: <strong>${p.severity.d}</strong>`;
+                    case 'jatidiri': return `Role model: ${p.nama || '-'}`;
+                    case 'masa': return `Kuadran 1-4 dilengkapkan`;
+                    case 'vak': return `Gaya dominan: <strong>${p.result}</strong>`;
+                    case 'kerjaya': return `Kecenderungan: <strong>${(p.winners||[]).join(' & ') || '-'}</strong>`;
+                    case 'resume': return `${p.pct}% lengkap (${p.checked}/${p.total})`;
+                    case 'temuduga': return `${p.pct}% bersedia (${p.checked}/${p.total})`;
+                    default: return JSON.stringify(p);
+                }
+            } catch (e) { return '<span class="text-gray-400">Data tidak lengkap</span>'; }
+        }
+
+        let adminStudentsData = null;
+
+        async function loadAdminStudents() {
+            const list = document.getElementById('admin-student-list');
+            list.innerHTML = '<p class="text-sm text-gray-500">Memuatkan...</p>';
+            try {
+                const { data, error } = await sb.rpc('admin_get_students', { pw: ADMIN_PASSWORD });
+                if (error || !data) { list.innerHTML = '<p class="text-sm text-red-600">Gagal memuat data pelajar.</p>'; return; }
+                const byMatrik = {};
+                data.forEach(row => {
+                    if (!byMatrik[row.no_matrik]) {
+                        byMatrik[row.no_matrik] = { nama: row.nama, no_matrik: row.no_matrik, no_ic: row.no_ic, no_tel: row.no_tel, daftar_terkini: row.daftar_terkini, activities: {} };
+                    }
+                    if (row.activity_key) byMatrik[row.no_matrik].activities[row.activity_key] = { payload: row.payload, jawapan_pada: row.jawapan_pada };
+                });
+                adminStudentsData = Object.values(byMatrik).sort((a, b) => a.nama.localeCompare(b.nama));
+                renderAdminStudents();
+            } catch (err) {
+                list.innerHTML = '<p class="text-sm text-red-600">Ralat sambungan ke Supabase.</p>';
+            }
+        }
+
+        function renderAdminStudents() {
+            const list = document.getElementById('admin-student-list');
+            if (!adminStudentsData) return;
+            const q = (document.getElementById('admin-student-search').value || '').toLowerCase();
+            const filtered = adminStudentsData.filter(s => s.nama.toLowerCase().includes(q) || s.no_matrik.toLowerCase().includes(q));
+
+            if (filtered.length === 0) { list.innerHTML = '<p class="text-sm text-gray-500 text-center py-6">Tiada pelajar dijumpai.</p>'; return; }
+
+            list.innerHTML = `<p class="text-xs text-gray-400 mb-3">${filtered.length} daripada ${adminStudentsData.length} pelajar</p>` + filtered.map(s => {
+                const activityKeys = Object.keys(s.activities);
+                const rows = activityKeys.length === 0
+                    ? '<p class="text-xs text-gray-400 italic">Belum lengkapkan sebarang aktiviti.</p>'
+                    : activityKeys.map(k => `
+                        <div class="flex justify-between items-start gap-3 py-1.5 border-b border-gray-50 text-xs">
+                            <span class="text-gray-500 shrink-0 w-40">${ACTIVITY_LABELS[k] || k}</span>
+                            <span class="text-gray-700 text-right">${formatActivitySummary(k, s.activities[k].payload)}</span>
+                        </div>`).join('');
+                return `
+                    <details class="border rounded-lg mb-2 group">
+                        <summary class="cursor-pointer list-none p-3 flex justify-between items-center hover:bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-sm text-gray-800">${s.nama}</p>
+                                <p class="text-xs text-gray-500">${s.no_matrik} &middot; ${s.no_ic} &middot; ${s.no_tel}</p>
+                            </div>
+                            <span class="text-xs text-indigo-600 font-medium">${activityKeys.length} / ${Object.keys(ACTIVITY_LABELS).length} aktiviti <i class="fas fa-chevron-down ml-1 group-open:rotate-180 transition-transform"></i></span>
+                        </summary>
+                        <div class="px-3 pb-3">${rows}</div>
+                    </details>`;
+            }).join('');
         }
 
         // Ujian Inventori Personaliti Warna (IPW) - jadual kata sifat sebenar m.s 18 PDF
