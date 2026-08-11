@@ -49,34 +49,57 @@
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
     <div id="login-screen" class="fixed inset-0 bg-indigo-900 z-50 flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+        <button onclick="toggleLoginMode()" id="login-mode-toggle" class="absolute top-4 left-4 sm:top-6 sm:left-6 text-white/90 hover:text-white flex items-center gap-2 text-sm bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition">
+            <i class="fas fa-right-to-bracket"></i> <span id="login-mode-toggle-label">Log Masuk</span>
+        </button>
+
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 fade-in">
             <div class="text-center mb-8">
                 <img src="logo.jpg" alt="Logo MInD" class="max-w-[220px] w-full mx-auto mb-4 rounded-lg shadow-sm">
-                <h2 class="text-2xl font-bold text-gray-800">Pendaftaran Modul</h2>
-                <p class="text-sm text-gray-500 mt-1">Sila masukkan butiran diri anda</p>
+                <h2 class="text-2xl font-bold text-gray-800" id="login-heading">Pendaftaran Modul</h2>
+                <p class="text-sm text-gray-500 mt-1" id="login-subheading">Sila masukkan butiran diri anda</p>
             </div>
-            
-            <form id="login-form" onsubmit="event.preventDefault(); handleLogin();" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Penuh</label>
-                    <input type="text" id="reg-nama" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: Ali bin Abu">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">No. Pendaftaran (Matrik)</label>
-                    <input type="text" id="reg-matrik" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 03DKA21F1001">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">No. Kad Pengenalan</label>
-                    <input type="text" id="reg-ic" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 010203-04-0506">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">No. Telefon</label>
-                    <input type="tel" id="reg-tel" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 012-3456789">
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-md mt-4">
-                    Mula Aktiviti
-                </button>
-            </form>
+
+            <div id="register-form-wrap">
+                <form id="login-form" onsubmit="event.preventDefault(); handleLogin();" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Penuh</label>
+                        <input type="text" id="reg-nama" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: Ali bin Abu">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">No. Pendaftaran (Matrik)</label>
+                        <input type="text" id="reg-matrik" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 03DKA21F1001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">No. Kad Pengenalan</label>
+                        <input type="text" id="reg-ic" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 010203-04-0506">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">No. Telefon</label>
+                        <input type="tel" id="reg-tel" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 012-3456789">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-md mt-4">
+                        Mula Aktiviti
+                    </button>
+                </form>
+            </div>
+
+            <div id="student-login-form-wrap" class="hidden">
+                <form id="student-login-form" onsubmit="event.preventDefault(); handleStudentLogin();" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">No. Pendaftaran (Matrik)</label>
+                        <input type="text" id="sl-matrik" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 03DKA21F1001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">No. Kad Pengenalan</label>
+                        <input type="text" id="sl-ic" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: 010203-04-0506">
+                    </div>
+                    <p id="student-login-error" class="text-xs text-red-600 hidden"></p>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-md mt-4">
+                        Log Masuk
+                    </button>
+                </form>
+            </div>
         </div>
         <p class="text-indigo-200 text-sm mt-8">Hak Cipta Amirul Ali JKM POLIMAS</p>
         <button onclick="openAdmin()" class="text-indigo-300 hover:text-white text-xs mt-2 underline">Panel Admin</button>
@@ -617,6 +640,22 @@
         // Data Pelajar
         let currentUser = {};
 
+        function enterMainApp() {
+            document.getElementById('display-nama').innerText = currentUser.nama;
+            document.getElementById('display-matrik').innerText = currentUser.matrik;
+            document.getElementById('display-ic').innerText = currentUser.ic;
+            document.getElementById('display-tel').innerText = currentUser.tel;
+            document.getElementById('header-user-name').innerText = currentUser.nama;
+
+            document.getElementById('login-screen').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').classList.remove('hidden-section');
+            }, 500);
+
+            applyActivityConfig();
+        }
+
         async function handleLogin() {
             currentUser = {
                 nama: document.getElementById('reg-nama').value,
@@ -639,19 +678,45 @@
                 console.warn('Gagal simpan pelajar ke Supabase:', err);
             }
 
-            document.getElementById('display-nama').innerText = currentUser.nama;
-            document.getElementById('display-matrik').innerText = currentUser.matrik;
-            document.getElementById('display-ic').innerText = currentUser.ic;
-            document.getElementById('display-tel').innerText = currentUser.tel;
-            document.getElementById('header-user-name').innerText = currentUser.nama;
+            enterMainApp();
+        }
 
-            document.getElementById('login-screen').classList.add('opacity-0');
-            setTimeout(() => {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').classList.remove('hidden-section');
-            }, 500);
+        // Pelajar berdaftar log masuk semula dengan No. Matrik + No. Kad Pengenalan
+        // (disahkan melalui RPC student_login - bukan SELECT terus, supaya senarai penuh
+        // pelajar tidak terdedah kepada anon key; hanya padanan tepat sahaja dikembalikan)
+        async function handleStudentLogin() {
+            const matrik = document.getElementById('sl-matrik').value.trim();
+            const ic = document.getElementById('sl-ic').value.trim();
+            const errEl = document.getElementById('student-login-error');
+            errEl.classList.add('hidden');
 
-            applyActivityConfig();
+            try {
+                const { data, error } = await sb.rpc('student_login', { p_no_matrik: matrik, p_no_ic: ic });
+                if (error || !data || data.length === 0) {
+                    errEl.innerText = 'No. Matrik atau No. Kad Pengenalan tidak sepadan. Sila semak semula atau daftar akaun baru.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+                const row = data[0];
+                currentUser = { id: row.id, nama: row.nama, matrik: row.no_matrik, ic: row.no_ic, tel: row.no_tel };
+                enterMainApp();
+            } catch (err) {
+                errEl.innerText = 'Ralat sambungan ke pelayan. Sila cuba lagi.';
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        let loginMode = 'register';
+        function toggleLoginMode() {
+            loginMode = loginMode === 'register' ? 'login' : 'register';
+            const isLogin = loginMode === 'login';
+            document.getElementById('register-form-wrap').classList.toggle('hidden', isLogin);
+            document.getElementById('student-login-form-wrap').classList.toggle('hidden', !isLogin);
+            document.getElementById('login-heading').innerText = isLogin ? 'Log Masuk Pelajar' : 'Pendaftaran Modul';
+            document.getElementById('login-subheading').innerText = isLogin ? 'Masukkan No. Matrik & No. Kad Pengenalan anda' : 'Sila masukkan butiran diri anda';
+            document.getElementById('login-mode-toggle-label').innerText = isLogin ? 'Daftar Baru' : 'Log Masuk';
+            document.querySelector('#login-mode-toggle i').className = isLogin ? 'fas fa-user-plus' : 'fas fa-right-to-bracket';
+            document.getElementById('student-login-error').classList.add('hidden');
         }
 
         function logout() {
@@ -660,6 +725,8 @@
             setTimeout(() => {
                 document.getElementById('login-screen').classList.remove('opacity-0');
                 document.getElementById('login-form').reset();
+                document.getElementById('student-login-form').reset();
+                if (loginMode === 'login') toggleLoginMode();
             }, 50);
             showSection('home', document.querySelector('#nav-menu button')); // reset to home
         }
