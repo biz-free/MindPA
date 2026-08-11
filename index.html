@@ -48,7 +48,7 @@
 </head>
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
-    <div id="login-screen" class="fixed inset-0 bg-indigo-900 z-50 flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+    <div id="login-screen" class="fixed inset-0 bg-indigo-900 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto transition-opacity duration-500">
         <button onclick="toggleLoginMode()" id="login-mode-toggle" class="absolute top-4 left-4 sm:top-6 sm:left-6 text-white/90 hover:text-white flex items-center gap-2 text-sm bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition">
             <i class="fas fa-right-to-bracket"></i> <span id="login-mode-toggle-label">Log Masuk</span>
         </button>
@@ -102,7 +102,9 @@
             </div>
         </div>
         <p class="text-indigo-200 text-sm mt-8">Hak Cipta Amirul Ali JKM POLIMAS</p>
-        <button onclick="openAdmin()" class="text-indigo-300 hover:text-white text-xs mt-2 underline">Panel Admin</button>
+        <button onclick="openAdmin()" class="mt-3 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-indigo-200 hover:text-white flex items-center justify-center transition active:scale-95" aria-label="Panel Admin">
+            <i class="fas fa-user-shield text-lg"></i>
+        </button>
     </div>
 
     <!-- Panel Admin -->
