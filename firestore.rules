@@ -1,0 +1,62 @@
+// firestore.rules — translated from Supabase RLS policies on "mind-pa-emodul"
+// (public.students, public.activity_config, public.activity_responses,
+//  public.contact_submissions, public.admin_config)
+//
+// Original Supabase policies only used the "anon" role (no Supabase Auth
+// involved), so this preserves the SAME open/closed behaviour per table.
+// Everyone reading this: these rules are AS OPEN as the original — nothing
+// was tightened or loosened. Review before deploying, especially the
+// activity_config "anyone can update" rule (flagged below).
+//
+// admin_config, and the password-gated reads/deletes that used to be
+// Postgres RPCs (student_login, admin_get_students, admin_get_contacts,
+// get_contact_count, admin_delete_contact), are now served by Cloud
+// Functions in functions/index.js, which use the Admin SDK and bypass
+// these rules entirely — so locking clients out here is what makes that
+// safe.
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // students — original: anon can INSERT only (no read/update/delete policy)
+    match /students/{studentId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    // activity_config — original: anon can SELECT (all rows) AND UPDATE (all rows, no restriction)
+    // NOTE: the "anyone can update" policy on Supabase had qual:true / with_check:true,
+    // meaning literally any anonymous caller could overwrite any activity_config row.
+    // This is unusual for a config table — flagging it here rather than silently
+    // tightening it, since that's a real behaviour change you may not want.
+    match /activity_config/{activityKey} {
+      allow read: if true;
+      allow update: if true;
+      allow create, delete: if false;
+    }
+
+    // activity_responses — original: anon can INSERT only
+    match /activity_responses/{responseId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    // contact_submissions — original: anon can INSERT only. Reads/deletes
+    // and the count go through Cloud Functions (admin_get_contacts,
+    // get_contact_count, admin_delete_contact equivalents).
+    match /contact_submissions/{submissionId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    // admin_config — original: RLS enabled, ZERO policies = fully locked to
+    // anon (only a service-role key could touch it). Default-deny below
+    // reproduces that: no client, authenticated or not, can read/write this.
+    // Only the Admin SDK (server-side, i.e. Cloud Functions) can access it.
+    match /admin_config/{docId} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+serviceAccountKey.json
+serviceAccountKey.json.json
+_migration_files/serviceAccountKey.json
+_migration_files/raw_export.json
+_migration_files/firestore_import_data.json
+firebase-debug.log
+.firebase/
+.claude/scheduled_tasks.lock

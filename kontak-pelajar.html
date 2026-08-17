@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kontak Pelajar</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  --ink: #1F3B36;
+  --paper: #EDF0E9;
+  --surface: #FCFBF7;
+  --brass: #B07E33;
+  --stamp: #A63D40;
+  --line: #CBC6B6;
+  --muted: #66705F;
+  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 20px 14px 60px;
+}
+
+.kpr-shell { max-width: 560px; margin: 0 auto; }
+
+.kpr-header { margin-bottom: 4px; }
+.kpr-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass);
+  display: block;
+  margin-bottom: 4px;
+}
+.kpr-title {
+  font-family: 'Zilla Slab', serif;
+  font-weight: 700;
+  font-size: 30px;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.01em;
+}
+
+.kpr-tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--line); }
+.kpr-tab {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  margin-bottom: -2px;
+  border-radius: 6px 6px 0 0;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.kpr-tab:hover { background: rgba(31,59,54,0.05); color: var(--ink); }
+.kpr-tab.active { color: var(--ink); border-bottom-color: var(--stamp); }
+.kpr-tab:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+.kpr-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 22px 20px 26px;
+  margin-top: 18px;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(31,59,54,0.06);
+}
+
+.kpr-entry-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kpr-entry-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--stamp);
+  display: inline-block;
+}
+
+.kpr-field { margin-bottom: 18px; }
+.kpr-field-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.kpr-field-num { color: var(--brass); font-weight: 500; }
+.kpr-input {
+  width: 100%;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 16px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.kpr-input::placeholder { color: #A3AA98; }
+.kpr-input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(31,59,54,0.1);
+}
+
+.kpr-submit-btn {
+  width: 100%;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 14px 20px;
+  background: var(--ink);
+  color: var(--surface);
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  margin-top: 6px;
+}
+.kpr-submit-btn:hover:not(:disabled) { background: #142925; }
+.kpr-submit-btn:active:not(:disabled) { transform: scale(0.98); }
+.kpr-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.kpr-submit-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+.kpr-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  margin-top: 14px;
+}
+.kpr-msg.error { background: rgba(166,61,64,0.08); color: var(--stamp); }
+
+.kpr-stamp-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 0 10px;
+  gap: 12px;
+}
+.kpr-stamp {
+  width: 112px;
+  height: 76px;
+  border: 3px solid var(--stamp);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-9deg) scale(0);
+  animation: kprStampIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.kpr-stamp-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--stamp);
+  transform: rotate(-9deg);
+}
+.kpr-stamp-caption { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--muted); }
+@keyframes kprStampIn {
+  0% { transform: rotate(-9deg) scale(0); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: rotate(-9deg) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kpr-stamp { animation: none; transform: rotate(-9deg) scale(1); }
+}
+
+.kpr-dash-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.kpr-dash-count { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--muted); }
+.kpr-dash-count b { color: var(--ink); font-size: 15px; }
+.kpr-dash-actions { display: flex; gap: 8px; }
+.kpr-icon-btn {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 9px 14px;
+  border-radius: 7px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.kpr-icon-btn:hover:not(:disabled) { border-color: var(--ink); }
+.kpr-icon-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.kpr-icon-btn.primary { background: var(--brass); border-color: var(--brass); color: #fff; }
+.kpr-icon-btn.primary:hover:not(:disabled) { background: #9a6c28; }
+.kpr-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.kpr-list { display: flex; flex-direction: column; }
+.kpr-row { display: flex; align-items: center; gap: 12px; padding: 13px 4px; border-top: 1px solid var(--line); }
+.kpr-row:first-child { border-top: none; }
+.kpr-row-num { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass); min-width: 34px; }
+.kpr-row-main { flex: 1; min-width: 0; }
+.kpr-row-name {
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpr-row-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpr-row-phone { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+.kpr-row-del {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+.kpr-row-del:hover { color: var(--stamp); background: rgba(166,61,64,0.08); }
+.kpr-row-del:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+.kpr-empty { text-align: center; padding: 40px 10px; color: var(--muted); }
+.kpr-empty-title { font-family: 'Zilla Slab', serif; font-size: 17px; color: var(--ink); margin-bottom: 4px; }
+.kpr-empty-sub { font-size: 13px; }
+
+.kpr-loading { text-align: center; padding: 30px 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+.kpr-note { font-size: 12px; color: var(--muted); margin-top: 16px; line-height: 1.5; padding-top: 14px; border-top: 1px dashed var(--line); }
+
+@media (max-width: 420px) {
+  .kpr-title { font-size: 25px; }
+  .kpr-card { padding: 18px 14px 22px; }
+  .kpr-row-phone { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="kpr-shell">
+  <div class="kpr-header">
+    <span class="kpr-eyebrow">Borang Pendaftaran</span>
+    <h1 class="kpr-title">Kontak Pelajar</h1>
+    <div class="kpr-tabs" role="tablist">
+      <button role="tab" aria-selected="true" class="kpr-tab active" id="tab-submit">Hantar</button>
+      <button role="tab" aria-selected="false" class="kpr-tab" id="tab-dashboard">Dashboard</button>
+    </div>
+  </div>
+
+  <div class="kpr-card" id="panel-submit">
+    <div class="kpr-entry-tag" id="entry-tag">Entri #···</div>
+
+    <div id="form-wrap">
+      <form id="contact-form" novalidate>
+        <div class="kpr-field">
+          <div class="kpr-field-label"><span class="kpr-field-num">01</span><span>Nama</span></div>
+          <input class="kpr-input" type="text" id="input-name" placeholder="Cth: Ahmad bin Ali" autocomplete="name" />
+        </div>
+        <div class="kpr-field">
+          <div class="kpr-field-label"><span class="kpr-field-num">02</span><span>Jabatan</span></div>
+          <input class="kpr-input" type="text" id="input-jabatan" placeholder="Cth: Kejuruteraan Mekatronik" />
+        </div>
+        <div class="kpr-field">
+          <div class="kpr-field-label"><span class="kpr-field-num">03</span><span>No. Telefon</span></div>
+          <input class="kpr-input" type="tel" id="input-phone" placeholder="Cth: 012-3456789" autocomplete="tel" />
+        </div>
+        <button class="kpr-submit-btn" type="submit" id="submit-btn"><span id="submit-btn-label">Hantar</span></button>
+        <div class="kpr-msg error" id="form-error" style="display:none"></div>
+      </form>
+    </div>
+
+    <div class="kpr-stamp-wrap" id="stamp-wrap" style="display:none">
+      <div class="kpr-stamp"><span class="kpr-stamp-text">DITERIMA</span></div>
+      <div class="kpr-stamp-caption">Kontak berjaya direkodkan.</div>
+    </div>
+  </div>
+
+  <div class="kpr-card" id="panel-dashboard" style="display:none">
+    <div id="dash-gate">
+      <div class="kpr-entry-tag">Akses Admin</div>
+      <div class="kpr-field">
+        <div class="kpr-field-label"><span>Kata Laluan Admin</span></div>
+        <input class="kpr-input" type="password" id="dash-password" placeholder="Masukkan kata laluan admin" autocomplete="current-password" />
+      </div>
+      <button class="kpr-submit-btn" type="button" id="dash-login-btn"><span id="dash-login-btn-label">Log Masuk</span></button>
+      <div class="kpr-msg error" id="dash-login-error" style="display:none"></div>
+    </div>
+
+    <div id="dash-content" style="display:none">
+      <div class="kpr-dash-head">
+        <div class="kpr-dash-count" id="dash-count"><b>—</b> kontak direkodkan</div>
+        <div class="kpr-dash-actions">
+          <button class="kpr-icon-btn" id="refresh-btn">↻ Refresh</button>
+          <button class="kpr-icon-btn primary" id="export-btn" disabled>⬇ Export vCard</button>
+        </div>
+      </div>
+      <div class="kpr-msg error" id="dash-error" style="display:none"></div>
+      <div id="dash-list"><div class="kpr-loading">Memuatkan senarai kontak…</div></div>
+      <div class="kpr-note">Senarai ini kini dilindungi kata laluan admin. <a href="#" id="dash-logout-link">Log keluar</a></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-functions.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyANl7eqK0i4YR4NPMHLUaxJcpXbKzinlM8",
+  authDomain: "mindpapolimas.firebaseapp.com",
+  projectId: "mindpapolimas",
+  storageBucket: "mindpapolimas.firebasestorage.app",
+  messagingSenderId: "983629028973",
+  appId: "1:983629028973:web:0e7eac16e743328898e964"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const fx = getFunctions(app);
+const TABLE = 'contact_submissions';
+
+const adminGetContactsFn = httpsCallable(fx, 'adminGetContacts');
+const getContactCountFn = httpsCallable(fx, 'getContactCount');
+const adminDeleteContactFn = httpsCallable(fx, 'adminDeleteContact');
+
+let contacts = [];
+let entryCount = null;
+let dashLoadedOnce = false;
+let adminPassword = null;
+
+const els = {
+  tabSubmit: document.getElementById('tab-submit'),
+  tabDashboard: document.getElementById('tab-dashboard'),
+  panelSubmit: document.getElementById('panel-submit'),
+  panelDashboard: document.getElementById('panel-dashboard'),
+  entryTag: document.getElementById('entry-tag'),
+  formWrap: document.getElementById('form-wrap'),
+  form: document.getElementById('contact-form'),
+  stampWrap: document.getElementById('stamp-wrap'),
+  nameInput: document.getElementById('input-name'),
+  jabatanInput: document.getElementById('input-jabatan'),
+  phoneInput: document.getElementById('input-phone'),
+  submitBtn: document.getElementById('submit-btn'),
+  submitBtnLabel: document.getElementById('submit-btn-label'),
+  formError: document.getElementById('form-error'),
+  dashGate: document.getElementById('dash-gate'),
+  dashContent: document.getElementById('dash-content'),
+  dashPassword: document.getElementById('dash-password'),
+  dashLoginBtn: document.getElementById('dash-login-btn'),
+  dashLoginBtnLabel: document.getElementById('dash-login-btn-label'),
+  dashLoginError: document.getElementById('dash-login-error'),
+  dashLogoutLink: document.getElementById('dash-logout-link'),
+  dashCount: document.getElementById('dash-count'),
+  dashList: document.getElementById('dash-list'),
+  dashError: document.getElementById('dash-error'),
+  refreshBtn: document.getElementById('refresh-btn'),
+  exportBtn: document.getElementById('export-btn'),
+};
+
+function switchTab(tab) {
+  const isSubmit = tab === 'submit';
+  els.tabSubmit.classList.toggle('active', isSubmit);
+  els.tabDashboard.classList.toggle('active', !isSubmit);
+  els.tabSubmit.setAttribute('aria-selected', String(isSubmit));
+  els.tabDashboard.setAttribute('aria-selected', String(!isSubmit));
+  els.panelSubmit.style.display = isSubmit ? '' : 'none';
+  els.panelDashboard.style.display = isSubmit ? 'none' : '';
+  if (!isSubmit) {
+    if (adminPassword) {
+      loadContacts(false);
+    } else {
+      els.dashPassword.value = '';
+      els.dashLoginError.style.display = 'none';
+      els.dashGate.style.display = '';
+      els.dashContent.style.display = 'none';
+      els.dashPassword.focus();
+    }
+  }
+}
+els.tabSubmit.addEventListener('click', () => switchTab('submit'));
+els.tabDashboard.addEventListener('click', () => switchTab('dashboard'));
+
+async function dashLogin() {
+  const pw = els.dashPassword.value;
+  if (!pw) {
+    els.dashLoginError.textContent = 'Sila masukkan kata laluan.';
+    els.dashLoginError.style.display = 'flex';
+    return;
+  }
+  els.dashLoginBtn.disabled = true;
+  els.dashLoginBtnLabel.textContent = 'Menyemak…';
+  els.dashLoginError.style.display = 'none';
+
+  try {
+    const result = await adminGetContactsFn({ pw });
+    adminPassword = pw;
+    contacts = result.data || [];
+    entryCount = contacts.length;
+    dashLoadedOnce = true;
+    els.dashPassword.value = '';
+    els.dashGate.style.display = 'none';
+    els.dashContent.style.display = '';
+    renderDashboard();
+    updateEntryTag();
+  } catch (err) {
+    els.dashLoginError.textContent = 'Kata laluan salah. Sila cuba lagi.';
+    els.dashLoginError.style.display = 'flex';
+  } finally {
+    els.dashLoginBtn.disabled = false;
+    els.dashLoginBtnLabel.textContent = 'Log Masuk';
+  }
+}
+els.dashLoginBtn.addEventListener('click', dashLogin);
+els.dashPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') dashLogin(); });
+
+els.dashLogoutLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  adminPassword = null;
+  contacts = [];
+  els.dashContent.style.display = 'none';
+  els.dashGate.style.display = '';
+  els.dashPassword.value = '';
+  els.dashLoginError.style.display = 'none';
+  els.dashPassword.focus();
+});
+
+function vEsc(str) {
+  return String(str || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n');
+}
+
+function buildVCard(c) {
+  const name = vEsc(c.name);
+  const jabatan = vEsc(c.jabatan);
+  const tel = String(c.phone || '').replace(/[^\d+]/g, '');
+  return [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    'FN:Pelajar ' + name + ' ' + jabatan,
+    'N:;' + name + ';' + jabatan + ';Pelajar;',
+    'item1.TEL:' + tel,
+    'item1.X-ABLabel:Mobile',
+    'CATEGORIES:Pelajar,' + jabatan + ',myContacts',
+    'END:VCARD'
+  ].join('\r\n');
+}
+
+function formatWhen(ts) {
+  if (!ts) return '';
+  try {
+    return new Date(ts).toLocaleString('ms-MY', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+  } catch (e) {
+    return '';
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = String(str || '');
+  return div.innerHTML;
+}
+
+function updateEntryTag() {
+  els.entryTag.textContent = entryCount === null
+    ? 'Entri #···'
+    : 'Entri #' + String(entryCount + 1).padStart(3, '0');
+}
+
+async function primeEntryCount() {
+  try {
+    const result = await getContactCountFn();
+    if (typeof result.data === 'number') {
+      entryCount = result.data;
+      updateEntryTag();
+    }
+  } catch (err) {
+    // senyap sahaja — ini cuma hiasan nombor entri, bukan kritikal
+  }
+}
+
+async function loadContacts(silent) {
+  if (!adminPassword) return;
+  els.dashError.style.display = 'none';
+  if (!silent) {
+    els.dashList.innerHTML = '<div class="kpr-loading">Memuatkan senarai kontak…</div>';
+  }
+
+  try {
+    const result = await adminGetContactsFn({ pw: adminPassword });
+    contacts = result.data || [];
+    entryCount = contacts.length;
+    dashLoadedOnce = true;
+    renderDashboard();
+    updateEntryTag();
+  } catch (err) {
+    if (err.code === 'functions/permission-denied') {
+      adminPassword = null;
+      els.dashContent.style.display = 'none';
+      els.dashGate.style.display = '';
+      els.dashLoginError.textContent = 'Sesi admin tamat. Sila log masuk semula.';
+      els.dashLoginError.style.display = 'flex';
+      return;
+    }
+    els.dashError.textContent = 'Tak dapat muatkan senarai. Cuba refresh.';
+    els.dashError.style.display = 'flex';
+  }
+}
+
+function renderDashboard() {
+  els.dashCount.innerHTML = '<b>' + contacts.length + '</b> kontak direkodkan';
+  els.exportBtn.disabled = contacts.length === 0;
+
+  if (contacts.length === 0) {
+    els.dashList.innerHTML = '<div class="kpr-empty"><div class="kpr-empty-title">Belum ada kontak</div>' +
+      '<div class="kpr-empty-sub">Kontak akan muncul di sini sebaik sahaja pelajar submit borang.</div></div>';
+    return;
+  }
+
+  let html = '<div class="kpr-list">';
+  contacts.forEach((c, idx) => {
+    const num = String(contacts.length - idx).padStart(3, '0');
+    html += '<div class="kpr-row">' +
+      '<div class="kpr-row-num">#' + num + '</div>' +
+      '<div class="kpr-row-main">' +
+        '<div class="kpr-row-name">' + escapeHtml(c.name) + '</div>' +
+        '<div class="kpr-row-sub">' + escapeHtml(c.jabatan) + ' · ' + formatWhen(c.created_at) + '</div>' +
+      '</div>' +
+      '<div class="kpr-row-phone">' + escapeHtml(c.phone) + '</div>' +
+      '<button class="kpr-row-del" data-id="' + c.id + '" aria-label="Padam ' + escapeHtml(c.name) + '">✕</button>' +
+    '</div>';
+  });
+  html += '</div>';
+  els.dashList.innerHTML = html;
+
+  els.dashList.querySelectorAll('.kpr-row-del').forEach((btn) => {
+    btn.addEventListener('click', () => deleteContact(btn.getAttribute('data-id')));
+  });
+}
+
+async function deleteContact(id) {
+  if (!adminPassword) return;
+  const prev = contacts;
+  contacts = contacts.filter((c) => c.id !== id);
+  entryCount = contacts.length;
+  renderDashboard();
+  updateEntryTag();
+  try {
+    await adminDeleteContactFn({ pw: adminPassword, contactId: id });
+  } catch (err) {
+    contacts = prev;
+    entryCount = contacts.length;
+    renderDashboard();
+    updateEntryTag();
+  }
+}
+
+function exportAll() {
+  if (contacts.length === 0) return;
+  const body = contacts.slice().reverse().map(buildVCard).join('\r\n');
+  const blob = new Blob([body], { type: 'text/vcard;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'kontak_pelajar_' + stamp + '.vcf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+els.form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = els.nameInput.value.trim();
+  const jabatan = els.jabatanInput.value.trim();
+  const phone = els.phoneInput.value.trim();
+
+  els.formError.style.display = 'none';
+
+  if (!name || !jabatan || !phone) {
+    els.formError.textContent = 'Sila isi semua ruangan.';
+    els.formError.style.display = 'flex';
+    return;
+  }
+  if (!/^[\d+\-\s()]{6,}$/.test(phone)) {
+    els.formError.textContent = 'No. telefon tidak sah — guna digit sahaja.';
+    els.formError.style.display = 'flex';
+    return;
+  }
+
+  els.submitBtn.disabled = true;
+  els.submitBtnLabel.textContent = 'Menghantar…';
+
+  try {
+    await addDoc(collection(db, TABLE), { name: name, jabatan: jabatan, phone: phone, created_at: serverTimestamp() });
+  } catch (err) {
+    els.submitBtn.disabled = false;
+    els.submitBtnLabel.textContent = 'Hantar';
+    els.formError.textContent = 'Gagal hantar. Sila cuba lagi.';
+    els.formError.style.display = 'flex';
+    return;
+  }
+
+  els.submitBtn.disabled = false;
+  els.submitBtnLabel.textContent = 'Hantar';
+
+  els.form.reset();
+  els.formWrap.style.display = 'none';
+  els.stampWrap.style.display = 'flex';
+  entryCount = entryCount === null ? null : entryCount + 1;
+  updateEntryTag();
+
+  setTimeout(() => {
+    els.stampWrap.style.display = 'none';
+    els.formWrap.style.display = '';
+  }, 2400);
+});
+
+els.refreshBtn.addEventListener('click', () => loadContacts(false));
+els.exportBtn.addEventListener('click', exportAll);
+
+primeEntryCount();
+</script>
+</body>
+</html>

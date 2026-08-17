@@ -6,7 +6,9 @@
     <title>eModul MInD Interaktif</title>
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-functions-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -594,10 +596,18 @@
     </div>
 
     <script>
-        // ==== Supabase ====
-        const SUPABASE_URL = 'https://trrbzocntfrzsbmurbpn.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_9EF7C75CmfjS3bEC-0wx_g_4XDlImjG';
-        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // ==== Firebase ====
+        const firebaseConfig = {
+            apiKey: "AIzaSyANl7eqK0i4YR4NPMHLUaxJcpXbKzinlM8",
+            authDomain: "mindpapolimas.firebaseapp.com",
+            projectId: "mindpapolimas",
+            storageBucket: "mindpapolimas.firebasestorage.app",
+            messagingSenderId: "983629028973",
+            appId: "1:983629028973:web:0e7eac16e743328898e964"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const fx = firebase.functions();
 
         // Rekod pelajar & jawapan aktiviti disimpan sebagai log sedia-tambah (append-only):
         // setiap log masuk/hantar aktiviti = satu baris baru dengan cap masa, bukan kemas kini
@@ -605,28 +615,29 @@
         // mendedahkan No. KP/telefon semua pelajar), sekali gus menyimpan sejarah penuh setiap
         // percubaan pelajar untuk semakan Penasihat Akademik/Pegawai Psikologi kemudian.
 
-        // Simpan jawapan aktiviti pelajar ke Supabase (tidak menghalang UI jika gagal/luar talian)
+        // Simpan jawapan aktiviti pelajar ke Firestore (tidak menghalang UI jika gagal/luar talian)
         async function saveResponse(activityKey, payload) {
             if (!currentUser.id) return;
             try {
-                const { error } = await sb.from('activity_responses').insert({
+                await db.collection('activity_responses').add({
                     student_id: currentUser.id,
                     activity_key: activityKey,
-                    payload: payload
+                    payload: payload,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    updated_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                if (error) console.warn('Gagal simpan ke Supabase:', activityKey, error);
             } catch (err) {
-                console.warn('Gagal simpan ke Supabase:', activityKey, err);
+                console.warn('Gagal simpan ke Firebase:', activityKey, err);
             }
         }
 
         // Papar/sembunyi menu & seksyen berdasarkan activity_config (ditetapkan oleh Panel Admin)
         async function applyActivityConfig() {
             try {
-                const { data, error } = await sb.from('activity_config').select('activity_key, is_active');
-                if (error || !data) return;
-                data.forEach(row => {
-                    const btn = document.querySelector(`#nav-menu button[data-activity="${row.activity_key}"]`);
+                const snap = await db.collection('activity_config').get();
+                snap.forEach(doc => {
+                    const row = doc.data();
+                    const btn = document.querySelector(`#nav-menu button[data-activity="${doc.id}"]`);
                     if (btn) btn.classList.toggle('hidden', !row.is_active);
                 });
                 document.querySelectorAll('.nav-group').forEach(group => {
@@ -668,24 +679,24 @@
 
             try {
                 currentUser.id = crypto.randomUUID();
-                const { error } = await sb.from('students').insert({
-                    id: currentUser.id,
+                await db.collection('students').doc(currentUser.id).set({
                     nama: currentUser.nama,
                     no_matrik: currentUser.matrik,
                     no_ic: currentUser.ic,
-                    no_tel: currentUser.tel
+                    no_tel: currentUser.tel,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    updated_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                if (error) console.warn('Gagal simpan pelajar ke Supabase:', error);
             } catch (err) {
-                console.warn('Gagal simpan pelajar ke Supabase:', err);
+                console.warn('Gagal simpan pelajar ke Firebase:', err);
             }
 
             enterMainApp();
         }
 
         // Pelajar berdaftar log masuk semula dengan No. Matrik + No. Kad Pengenalan
-        // (disahkan melalui RPC student_login - bukan SELECT terus, supaya senarai penuh
-        // pelajar tidak terdedah kepada anon key; hanya padanan tepat sahaja dikembalikan)
+        // (disahkan melalui Cloud Function studentLogin - bukan baca terus Firestore,
+        // supaya senarai penuh pelajar tidak terdedah; hanya padanan tepat dikembalikan)
         async function handleStudentLogin() {
             const matrik = document.getElementById('sl-matrik').value.trim();
             const ic = document.getElementById('sl-ic').value.trim();
@@ -693,8 +704,9 @@
             errEl.classList.add('hidden');
 
             try {
-                const { data, error } = await sb.rpc('student_login', { p_no_matrik: matrik, p_no_ic: ic });
-                if (error || !data || data.length === 0) {
+                const studentLoginFn = fx.httpsCallable('studentLogin');
+                const { data } = await studentLoginFn({ noMatrik: matrik, noIc: ic });
+                if (!data || data.length === 0) {
                     errEl.innerText = 'No. Matrik atau No. Kad Pengenalan tidak sepadan. Sila semak semula atau daftar akaun baru.';
                     errEl.classList.remove('hidden');
                     return;
@@ -782,12 +794,11 @@
         }
 
         // ==== Panel Admin ====
-        // NOTA KESELAMATAN: Ini adalah aplikasi HTML tunggal tanpa server backend, jadi
-        // sekatan ini hanya di peringkat antara muka (client-side), BUKAN dikuatkuasakan
-        // oleh pangkalan data. Sesiapa yang mahir boleh memintas ini melalui devtools.
-        // Tukar kata laluan di bawah, dan jangan simpan sebarang data sensitif dalam
-        // activity_config kerana ia boleh dibaca/ditulis oleh sesiapa yang memegang anon key.
-        const ADMIN_PASSWORD = 'MInD@Admin2026';
+        // Kata laluan admin disahkan oleh Cloud Function adminGetStudents (bcrypt
+        // terhadap admin_config.password_hash di Firestore) — tiada lagi kata laluan
+        // tersimpan dalam kod JS ini. Firestore rules mengunci terus admin_config
+        // daripada klien; hanya Admin SDK (Cloud Functions) boleh membacanya.
+        let currentAdminPassword = null;
 
         function openAdmin() {
             document.getElementById('admin-screen').classList.remove('hidden-section');
@@ -796,6 +807,7 @@
             document.getElementById('admin-login-error').classList.add('hidden');
             document.getElementById('admin-password').value = '';
             adminStudentsData = null;
+            currentAdminPassword = null;
             switchAdminTab('activities');
         }
 
@@ -803,23 +815,39 @@
             document.getElementById('admin-screen').classList.add('hidden-section');
         }
 
+        function groupAdminStudentRows(rows) {
+            const byMatrik = {};
+            rows.forEach(row => {
+                if (!byMatrik[row.no_matrik]) {
+                    byMatrik[row.no_matrik] = { nama: row.nama, no_matrik: row.no_matrik, no_ic: row.no_ic, no_tel: row.no_tel, daftar_terkini: row.daftar_terkini, activities: {} };
+                }
+                if (row.activity_key) byMatrik[row.no_matrik].activities[row.activity_key] = { payload: row.payload, jawapan_pada: row.jawapan_pada };
+            });
+            return Object.values(byMatrik).sort((a, b) => a.nama.localeCompare(b.nama));
+        }
+
         async function adminLogin() {
             const pw = document.getElementById('admin-password').value;
-            if (pw !== ADMIN_PASSWORD) {
+            try {
+                const adminGetStudentsFn = fx.httpsCallable('adminGetStudents');
+                const { data } = await adminGetStudentsFn({ pw });
+                currentAdminPassword = pw;
+                adminStudentsData = groupAdminStudentRows(data);
+                renderAdminStudents();
+                document.getElementById('admin-login-box').classList.add('hidden');
+                document.getElementById('admin-panel-box').classList.remove('hidden');
+                await loadAdminActivities();
+            } catch (err) {
                 document.getElementById('admin-login-error').classList.remove('hidden');
-                return;
             }
-            document.getElementById('admin-login-box').classList.add('hidden');
-            document.getElementById('admin-panel-box').classList.remove('hidden');
-            await loadAdminActivities();
         }
 
         async function loadAdminActivities() {
             const list = document.getElementById('admin-activity-list');
             list.innerHTML = '<p class="text-sm text-gray-500">Memuatkan...</p>';
             try {
-                const { data, error } = await sb.from('activity_config').select('*').order('sort_order');
-                if (error || !data) { list.innerHTML = '<p class="text-sm text-red-600">Gagal memuat senarai aktiviti.</p>'; return; }
+                const snap = await db.collection('activity_config').orderBy('sort_order').get();
+                const data = snap.docs.map(doc => ({ activity_key: doc.id, ...doc.data() }));
                 const grouped = {};
                 data.forEach(row => { (grouped[row.domain] = grouped[row.domain] || []).push(row); });
                 list.innerHTML = Object.entries(grouped).map(([domain, rows]) => `
@@ -834,18 +862,18 @@
                     </div>
                 `).join('');
             } catch (err) {
-                list.innerHTML = '<p class="text-sm text-red-600">Ralat sambungan ke Supabase.</p>';
+                list.innerHTML = '<p class="text-sm text-red-600">Ralat sambungan ke Firebase.</p>';
             }
         }
 
         async function toggleActivity(activityKey, isActive) {
             try {
-                const { error } = await sb.from('activity_config').update({ is_active: isActive, updated_at: new Date().toISOString() }).eq('activity_key', activityKey);
-                if (error) { console.warn('Gagal kemaskini status aktiviti:', error); await loadAdminActivities(); return; }
+                await db.collection('activity_config').doc(activityKey).update({ is_active: isActive, updated_at: firebase.firestore.FieldValue.serverTimestamp() });
                 await loadAdminActivities();
                 applyActivityConfig();
             } catch (err) {
                 console.warn('Gagal kemaskini status aktiviti:', err);
+                await loadAdminActivities();
             }
         }
 
@@ -901,23 +929,19 @@
 
         let adminStudentsData = null;
 
+        // Biasanya sudah dimuatkan semasa adminLogin(); ini hanya jalan fallback jika
+        // adminStudentsData entah bagaimana kosong semula (mis. dipanggil semula selepas ralat).
         async function loadAdminStudents() {
+            if (adminStudentsData) { renderAdminStudents(); return; }
             const list = document.getElementById('admin-student-list');
             list.innerHTML = '<p class="text-sm text-gray-500">Memuatkan...</p>';
             try {
-                const { data, error } = await sb.rpc('admin_get_students', { pw: ADMIN_PASSWORD });
-                if (error || !data) { list.innerHTML = '<p class="text-sm text-red-600">Gagal memuat data pelajar.</p>'; return; }
-                const byMatrik = {};
-                data.forEach(row => {
-                    if (!byMatrik[row.no_matrik]) {
-                        byMatrik[row.no_matrik] = { nama: row.nama, no_matrik: row.no_matrik, no_ic: row.no_ic, no_tel: row.no_tel, daftar_terkini: row.daftar_terkini, activities: {} };
-                    }
-                    if (row.activity_key) byMatrik[row.no_matrik].activities[row.activity_key] = { payload: row.payload, jawapan_pada: row.jawapan_pada };
-                });
-                adminStudentsData = Object.values(byMatrik).sort((a, b) => a.nama.localeCompare(b.nama));
+                const adminGetStudentsFn = fx.httpsCallable('adminGetStudents');
+                const { data } = await adminGetStudentsFn({ pw: currentAdminPassword });
+                adminStudentsData = groupAdminStudentRows(data);
                 renderAdminStudents();
             } catch (err) {
-                list.innerHTML = '<p class="text-sm text-red-600">Ralat sambungan ke Supabase.</p>';
+                list.innerHTML = '<p class="text-sm text-red-600">Ralat sambungan ke Firebase.</p>';
             }
         }
 
